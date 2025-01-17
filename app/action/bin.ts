@@ -1,12 +1,12 @@
 "use server";
+import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
+
 type Bin = {
   status: "FUNCTIONAL" | "UNDER_MAINTENANCE";
   currentCapacity: number;
   binMaterial: { name: string };
 };
-
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
 
 export const getBinByUserIdAndMaterial = async (
   id: string,
@@ -14,7 +14,7 @@ export const getBinByUserIdAndMaterial = async (
 ) => {
   const token = cookies().get("token");
   const res = await fetch(
-    `${process.env.HOSTED_URL}/api/bin/${id}?material=${material}`,
+    `${process.env.HOSTED_URL}/api/bin/user/${id}?material=${material}`,
     {
       method: "GET",
       headers: {
@@ -27,8 +27,9 @@ export const getBinByUserIdAndMaterial = async (
     const { message }: { message: string } = await res.json();
     return { error: message };
   }
-  const { bin }: { bin: Bin } = await res.json();
-  return bin;
+  const { bins }: { bins: Bin[] } = await res.json();
+  // return the first bin
+  return bins[0];
 };
 
 export const getBinsByUserId = async () => {
@@ -36,7 +37,7 @@ export const getBinsByUserId = async () => {
   const payload = jwt.decode(token?.value as string);
   const id =
     payload && typeof payload !== "string" ? payload.userId : undefined;
-  const res = await fetch(`${process.env.HOSTED_URL}/api/bin-capacity/${id}`, {
+  const res = await fetch(`${process.env.HOSTED_URL}/api/bin/user/${id}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

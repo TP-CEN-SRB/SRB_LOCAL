@@ -44,7 +44,7 @@ export const createDisposal = async (
       "Content-Type": "application/json",
       Authorization: `Bearer ${token?.value}`,
     },
-    body: JSON.stringify({ id: userId, material, weightInGrams }),
+    body: JSON.stringify({ userId, material, weightInGrams }),
   });
   if (res.status !== 200) {
     const { message }: { message: string } = await res.json();
@@ -57,13 +57,16 @@ export const createDisposal = async (
 
 export const getUnscannedDisposal = async (id: string) => {
   const token = cookies().get("token");
-  const res = await fetch(`${process.env.HOSTED_URL}/api/disposal/${id}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token?.value}`,
-    },
-  });
+  const res = await fetch(
+    `${process.env.HOSTED_URL}/api/disposal/${id}?isRedeemed=${false}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token?.value}`,
+      },
+    }
+  );
   if (res.status !== 200) {
     const { message }: { message: string } = await res.json();
     return { error: message };
