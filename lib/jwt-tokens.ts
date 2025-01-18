@@ -6,7 +6,7 @@ export const generateQrToken = (data: {
   weightInGrams: number;
 }) => {
   const token = jwt.sign(data, process.env.NEXT_JWT_SECRET_KEY!, {
-    expiresIn: "2m",
+    expiresIn: "1h",
   });
   return token;
 };

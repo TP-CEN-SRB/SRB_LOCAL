@@ -10,6 +10,7 @@ type User = {
   password: string;
   name: string;
   faculty: string;
+  apiKey: string | null;
   role: "BIN" | "STUDENT" | "ADMIN";
   lat: number | null;
   long: number | null;

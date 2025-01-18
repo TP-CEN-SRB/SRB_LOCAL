@@ -12,14 +12,7 @@ export const POST = async (
         { status: 401 }
       );
     }
-    // const id = params.id;
-    // const binManager = await prisma.user.findUnique({ where: { id: id } });
-    // if (!binManager) {
-    //   return NextResponse.json(
-    //     { message: "Bin manager not found!" },
-    //     { status: 404 }
-    //   );
-    // }
+
     const { material, weightInGrams, thrown } = await req.json();
     await pusherServer.trigger(
       `detect-material-${params.id}`,
