@@ -23,7 +23,7 @@ const TimerRedirect = ({
     <div className="text-center">
       <p className="text-slate-600 font-semibold mt-4">
         Redirecting in
-        <span className="text-green-500 text-xl"> {remainingTime}</span> seconds
+        <span className="text-red-500 text-xl"> {remainingTime}</span> seconds
       </p>
     </div>
   );

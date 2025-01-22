@@ -3,13 +3,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const binRoutes = [
-  "/dispose-steps",
+  "/idle-video",
   "/disposal-confirmation",
   "/disposal-qr",
   "/detect-material",
-  "/my-points",
   "/bin-capacity",
-  "/bin-settings",
 ];
 // This function can be marked `async` if using `await` inside
 export function middleware(req: NextRequest) {

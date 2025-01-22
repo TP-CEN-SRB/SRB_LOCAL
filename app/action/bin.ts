@@ -1,6 +1,6 @@
 "use server";
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
+
+import { revalidatePath } from "next/cache";
 
 type Bin = {
   status: "FUNCTIONAL" | "UNDER_MAINTENANCE";
@@ -12,14 +12,13 @@ export const getBinByUserIdAndMaterial = async (
   id: string,
   material: string
 ) => {
-  const token = cookies().get("token");
   const res = await fetch(
     `${process.env.HOSTED_URL}/api/bin/user/${id}?material=${material}`,
     {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token?.value}`,
+        "x-api-key": process.env.API_KEY!,
       },
     }
   );
@@ -32,16 +31,13 @@ export const getBinByUserIdAndMaterial = async (
   return bins[0];
 };
 
-export const getBinsByUserId = async () => {
-  const token = cookies().get("token");
-  const payload = jwt.decode(token?.value as string);
-  const id =
-    payload && typeof payload !== "string" ? payload.userId : undefined;
+export const getBinsByUserId = async (id: string) => {
+  revalidatePath("/bin-capacity");
   const res = await fetch(`${process.env.HOSTED_URL}/api/bin/user/${id}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token?.value}`,
+      "x-api-key": process.env.API_KEY!,
     },
   });
   if (res.status !== 200) {

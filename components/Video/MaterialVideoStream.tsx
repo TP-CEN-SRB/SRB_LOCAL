@@ -40,15 +40,11 @@ const MaterialVideoStream = () => {
   }, []);
 
   return (
-    <div>
-      <h1>Live JPEG Stream</h1>
-      {/* We'll display the frames in an <img> */}
+    <div className="flex-1">
       <img
-        className="border-black border"
+        className="border-black border w-full h-full"
         ref={imgRef}
         alt="Camera Stream"
-        width="640"
-        height="480"
       />
     </div>
   );

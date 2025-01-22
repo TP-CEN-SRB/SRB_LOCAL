@@ -17,7 +17,7 @@ app.prepare().then(() => {
 
   io.on("connection", (socket) => {
     console.log("Web socket connected");
-    io.on("message", (message: string) => io.emit("imgFrame", message));
+    socket.on("message", (message: string) => io.emit("imgFrame", message));
   });
 
   httpServer

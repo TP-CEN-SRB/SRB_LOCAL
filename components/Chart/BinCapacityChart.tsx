@@ -72,7 +72,7 @@ export default function BinCapacityChart({
                 <LabelList
                   dataKey="totalMaintenanceCapacity"
                   position="center"
-                  content={({ x, y }) => (
+                  content={() => (
                     <g transform={`translate(28,60)`}>
                       <FaScrewdriverWrench className="text-red-500" size={40} />
                     </g>

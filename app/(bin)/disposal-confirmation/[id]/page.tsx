@@ -18,7 +18,7 @@ const DisposalConfirmationPage = ({ params }: { params: { id: string } }) => {
           Your disposal has been recorded
         </h2>
         <TimerRedirect
-          redirectTo={`/dispose-steps/${params.id}`}
+          redirectTo={`/idle-video/${params.id}`}
           delayInMs={5000}
         />
       </div>

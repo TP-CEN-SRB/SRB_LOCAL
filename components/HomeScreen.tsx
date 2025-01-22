@@ -9,33 +9,23 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { FaPowerOff, FaRecycle, FaTrash } from "react-icons/fa";
-import { RiAdminFill } from "react-icons/ri";
 import SignOutDialog from "./Dialog/SignOutDialog";
 
 const HomeScreen = ({ id }: { id: string | undefined }) => {
   const binButtons = [
     {
-      href: `/dispose-steps/${id}`,
+      href: `/idle-video/${id}`,
       label: "Get started",
       color: "bg-green-500",
       hoverColor: "hover:bg-green-600",
       icon: <FaRecycle />,
     },
     {
-      href: `/bin-capacity`,
+      href: `/bin-capacity/${id}`,
       label: "Bin capacity",
       color: "bg-indigo-500",
       hoverColor: "hover:bg-indigo-600",
       icon: <FaTrash />,
-    },
-  ];
-  const adminButtons = [
-    {
-      href: `/admin`,
-      label: "Admin dashboard",
-      color: "bg-green-500",
-      hoverColor: "hover:bg-green-600",
-      icon: <RiAdminFill />,
     },
   ];
   const [isSignOutDialogOpen, setSignOutDialogOpen] = useState(false);
