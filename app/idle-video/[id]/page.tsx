@@ -14,7 +14,10 @@ const IdleVideoPage = ({ params }: { params: { id: string } }) => {
         router.push(`/detect-material/${params.id}`);
       }
     });
-    return () => pusherClient.unsubscribe(`start-detect-${params.id}`);
+    return () => {
+      pusherClient.unbind("start-update");
+      pusherClient.unsubscribe(`start-detect-${params.id}`);
+    };
   }, [router, params.id]);
 
   return <IdleVideo />;

@@ -93,7 +93,10 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
         }
       }
     );
-    return () => pusherClient.unsubscribe(`detect-material-${params.id}`);
+    return () => {
+      pusherClient.unbind("material-details");
+      pusherClient.unsubscribe(`detect-material-${params.id}`);
+    };
   }, [material, weightInGrams, thrown, params.id, router]);
 
   return (
