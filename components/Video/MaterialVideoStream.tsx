@@ -1,5 +1,4 @@
 "use client";
-import { socket } from "@/lib/socket";
 import React, { useEffect, useRef } from "react";
 
 const MaterialVideoStream = () => {
