@@ -16,6 +16,7 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
   const [detecting, setDetecting] = useState(true);
   const [material, setMaterial] = useState("");
   const [weightInGrams, setWeightInGrams] = useState<number>();
+  const [resetCondition, setResetCondition] = useState(false);
 
   const [error, setError] = useState<string>();
   const [thrown, setThrown] = useState(false);
@@ -80,6 +81,7 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
         ) {
           setMaterial(data.material.toUpperCase() as string);
           setDetecting(false);
+          setResetCondition(true);
         }
         if (
           material &&
@@ -141,14 +143,14 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
                 redirectTo={`/idle-video/${params.id}`}
               />
             )}
-            {/* {!error && !thrown && weightInGrams === undefined && (
+            {!error && !thrown && weightInGrams === undefined && (
               <TimerRedirect
                 delayInMs={60000}
                 resetTimeInMs={30000}
                 resetCondition={resetCondition}
                 redirectTo={`/idle-video/${params.id}`}
               />
-            )} */}
+            )}
           </Card>
         </div>
         <div className="flex-1 border-l border-b border-black">
