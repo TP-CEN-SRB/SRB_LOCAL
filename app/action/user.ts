@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { LoginSchema } from "@/schemas";
 import * as z from "zod";
 import jwt from "jsonwebtoken";
+import { HOSTED_URL } from "@/keys";
 type User = {
   id: string;
   email: string;
@@ -26,7 +27,7 @@ const login = async (values: z.infer<typeof LoginSchema>) => {
     return { error: "Invalid fields!" };
   }
   const { email, password } = validatedFields.data;
-  const res = await fetch(`${process.env.HOSTED_URL}/api/login/bin`, {
+  const res = await fetch(`${HOSTED_URL}/api/login/bin`, {
     method: "POST",
     body: JSON.stringify({ email, password }),
     headers: { "Content-Type": "application/json" },
@@ -54,7 +55,7 @@ const login = async (values: z.infer<typeof LoginSchema>) => {
 
 const getLoggedInUserById = async (userId: string) => {
   const token = cookies().get("token");
-  const res = await fetch(`${process.env.HOSTED_URL}/api/user/${userId}`, {
+  const res = await fetch(`${HOSTED_URL}/api/user/${userId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

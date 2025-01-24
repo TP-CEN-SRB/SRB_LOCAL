@@ -1,4 +1,5 @@
 "use server";
+import { HOSTED_URL } from "@/keys";
 import { DisposalSchema } from "@/schemas";
 import { cookies } from "next/headers";
 import * as z from "zod";
@@ -38,7 +39,7 @@ export const createDisposal = async (
     return { error: "Invalid fields!" };
   }
   const { material, weightInGrams } = validatedFields.data;
-  const res = await fetch(`${process.env.HOSTED_URL}/api/disposal`, {
+  const res = await fetch(`${HOSTED_URL}/api/disposal`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -58,7 +59,7 @@ export const createDisposal = async (
 export const getUnscannedDisposal = async (id: string) => {
   const token = cookies().get("token");
   const res = await fetch(
-    `${process.env.HOSTED_URL}/api/disposal/${id}?isRedeemed=${false}`,
+    `${HOSTED_URL}/api/disposal/${id}?isRedeemed=${false}`,
     {
       method: "GET",
       headers: {

@@ -20,7 +20,6 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
   const [error, setError] = useState<string>();
   const [thrown, setThrown] = useState(false);
   const router = useRouter();
-  const [resetCondition, setResetCondition] = useState(false);
 
   useEffect(() => {
     const checkIfBinIsInOrder = async () => {
@@ -81,7 +80,6 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
         ) {
           setMaterial(data.material.toUpperCase() as string);
           setDetecting(false);
-          setResetCondition(true);
         }
         if (
           material &&
@@ -101,31 +99,11 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
 
   return (
     <div className="flex w-screen h-screen bg-center bg-[var(--pastel-green)]">
-      <div className="flex-1 h-full">
-        <Card centered fullHeight>
-          <div className="flex items-center justify-center mb-6 gap-x-3">
-            <CardHeader>Recycling Steps</CardHeader>
-            <RingLoader color="#22c55e" />
-          </div>
-          <CardBody>
-            <div className="flex flex-col space-y-8">
-              {recyclingSteps.map((step, index) => (
-                <div key={index} className="flex items-start space-x-4 text">
-                  <span className="text-3xl text-green-500 font-bold">
-                    {index + 1}.
-                  </span>
-                  <div>
-                    <h2 className="text-slate-800">{step.title}</h2>
-                    <p className="text-slate-600">{step.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardBody>
-        </Card>
+      <div className="flex-1 h-full w-full border-l border-black">
+        <MaterialVideoStream />
       </div>
       <div className="flex flex-col flex-1">
-        <div className="flex-1 border-l border-black">
+        <div className="flex-1 border-l border-b border-black">
           <Card fullHeight centered>
             <div className="flex flex-col items-center justify-center gap-y-3 mb-6">
               <CardHeader>Material Detection</CardHeader>
@@ -163,17 +141,39 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
                 redirectTo={`/idle-video/${params.id}`}
               />
             )}
-            {!error && !thrown && weightInGrams === undefined && (
+            {/* {!error && !thrown && weightInGrams === undefined && (
               <TimerRedirect
                 delayInMs={60000}
                 resetTimeInMs={30000}
                 resetCondition={resetCondition}
                 redirectTo={`/idle-video/${params.id}`}
               />
-            )}
+            )} */}
           </Card>
         </div>
-        <MaterialVideoStream />
+        <div className="flex-1 border-l border-b border-black">
+          <Card centered fullHeight>
+            <div className="flex items-center justify-center mb-6 gap-x-3">
+              <CardHeader>Recycling Steps</CardHeader>
+              <RingLoader color="#22c55e" />
+            </div>
+            <CardBody>
+              <div className="flex flex-col space-y-8">
+                {recyclingSteps.map((step, index) => (
+                  <div key={index} className="flex items-start space-x-4 text">
+                    <span className="text-3xl text-green-500 font-bold">
+                      {index + 1}.
+                    </span>
+                    <div>
+                      <h2 className="text-slate-800">{step.title}</h2>
+                      <p className="text-slate-600">{step.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardBody>
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { API_KEY } from "@/keys";
 import { pusherServer } from "@/lib/pusher";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -7,20 +8,12 @@ export const POST = async (
 ) => {
   try {
     const authorization = req.headers.get("x-api-key");
-    if (authorization !== process.env.API_KEY) {
+    if (authorization !== API_KEY) {
       return NextResponse.json(
         { message: "Permission denied!" },
         { status: 401 }
       );
     }
-    // const id = params.id;
-    // const binManager = await prisma.user.findUnique({ where: { id: id } });
-    // if (!binManager) {
-    //   return NextResponse.json(
-    //     { message: "Bin manager not found!" },
-    //     { status: 404 }
-    //   );
-    // }
     const { start } = await req.json();
     if (start !== true) {
       return NextResponse.json(

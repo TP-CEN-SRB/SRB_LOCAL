@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pusherServer } from "@/lib/pusher";
 import { getBinByUserIdAndMaterial } from "@/app/action/bin";
+import { API_KEY } from "@/keys";
 
 export const POST = async (
   req: NextRequest,
@@ -8,7 +9,7 @@ export const POST = async (
 ) => {
   try {
     const authorization = req.headers.get("x-api-key");
-    if (authorization !== process.env.API_KEY) {
+    if (authorization !== API_KEY) {
       return NextResponse.json(
         { message: "Permission denied!" },
         { status: 401 }

@@ -1,8 +1,10 @@
 "use client";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
+import { FadeLoader } from "react-spinners";
 
 const MaterialVideoStream = () => {
-  const imgRef = useRef<HTMLImageElement | null>(null);
+  const [imageURL, setImageURL] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Connect to the WebSocket server (assuming it's on localhost:8080)
@@ -25,9 +27,8 @@ const MaterialVideoStream = () => {
       const blob = new Blob([buffer], { type: "image/jpeg" });
       const imageURL = URL.createObjectURL(blob);
 
-      if (imgRef.current) {
-        imgRef.current.src = imageURL; // Update image src
-      }
+      setImageURL(imageURL); // Update the image URL state
+      setIsLoading(false); // Once image is set, change loading state
     };
 
     ws.onerror = (error: Event) => {
@@ -41,16 +42,18 @@ const MaterialVideoStream = () => {
     return () => {
       ws.close(); // Cleanup WebSocket connection on unmount
     };
-  }, []);
+  }, []); // Empty dependency array to run the effect only once
 
-  return (
-    <div className="flex-1">
-      <img
-        className="border-black border w-full h-full"
-        ref={imgRef}
-        alt="Camera Stream"
-      />
+  return isLoading ? (
+    <div className="flex w-full h-full justify-center items-center">
+      <FadeLoader color="#22c55e" />
     </div>
+  ) : (
+    <img
+      className="w-full h-full"
+      src={imageURL as string}
+      alt="Camera Stream"
+    />
   );
 };
 

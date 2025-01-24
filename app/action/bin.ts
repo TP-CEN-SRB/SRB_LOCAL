@@ -1,5 +1,5 @@
 "use server";
-
+import { API_KEY, HOSTED_URL } from "@/keys";
 import { revalidatePath } from "next/cache";
 
 type Bin = {
@@ -13,12 +13,12 @@ export const getBinByUserIdAndMaterial = async (
   material: string
 ) => {
   const res = await fetch(
-    `${process.env.HOSTED_URL}/api/bin/user/${id}?material=${material}`,
+    `${HOSTED_URL}/api/bin/user/${id}?material=${material}`,
     {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": process.env.API_KEY!,
+        "x-api-key": API_KEY,
       },
     }
   );
@@ -33,11 +33,11 @@ export const getBinByUserIdAndMaterial = async (
 
 export const getBinsByUserId = async (id: string) => {
   revalidatePath("/bin-capacity");
-  const res = await fetch(`${process.env.HOSTED_URL}/api/bin/user/${id}`, {
+  const res = await fetch(`${HOSTED_URL}/api/bin/user/${id}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": process.env.API_KEY!,
+      "x-api-key": API_KEY,
     },
   });
   if (res.status !== 200) {
