@@ -51,9 +51,9 @@ export const createDisposal = async (
     const { message }: { message: string } = await res.json();
     return { error: message };
   }
-  // retrieve the disposalId
-  const { id }: { id: string } = await res.json();
-  return id;
+  // retrieve the disposalId and points awarded
+  const { id, point }: { id: string; point: number } = await res.json();
+  return { disposalId: id, point };
 };
 
 export const getUnscannedDisposal = async (id: string) => {

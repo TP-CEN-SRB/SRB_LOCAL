@@ -7,7 +7,6 @@ const MaterialVideoStream = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Connect to the WebSocket server (assuming it's on localhost:8080)
     const ws = new WebSocket("ws://192.168.5.215:8080"); // Change if needed
     ws.onopen = () => {
       console.log("WebSocket connection established.");
@@ -27,8 +26,8 @@ const MaterialVideoStream = () => {
       const blob = new Blob([buffer], { type: "image/jpeg" });
       const imageURL = URL.createObjectURL(blob);
 
-      setImageURL(imageURL); // Update the image URL state
-      setIsLoading(false); // Once image is set, change loading state
+      setImageURL(imageURL);
+      setIsLoading(false);
     };
 
     ws.onerror = (error: Event) => {
@@ -40,9 +39,9 @@ const MaterialVideoStream = () => {
     };
 
     return () => {
-      ws.close(); // Cleanup WebSocket connection on unmount
+      ws.close();
     };
-  }, []); // Empty dependency array to run the effect only once
+  }, []);
 
   return isLoading ? (
     <div className="flex w-full h-full justify-center items-center">

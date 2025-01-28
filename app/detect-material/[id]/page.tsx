@@ -48,17 +48,19 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
   useEffect(() => {
     const handleDisposal = async () => {
       if (thrown === true && material && weightInGrams) {
-        const disposalId = await createDisposal(
+        const { disposalId, point, error } = await createDisposal(
           {
             material,
             weightInGrams,
           },
           params.id
         );
-        if (typeof disposalId === "object" && "error" in disposalId) {
-          setError(disposalId.error);
-        } else {
+        if (error !== null && error !== undefined) {
+          setError(error);
+        } else if (point > 0) {
           router.push(`/disposal-qr/${params.id}?disposalId=${disposalId}`);
+        } else {
+          router.push(`/disposal-confirmation/${params.id}`);
         }
       }
     };
@@ -133,7 +135,7 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
               <div className="flex flex-col items-center justify-center mt-4">
                 <BeatLoader color="#22c55e" />
                 {thrown && weightInGrams && (
-                  <p className="text-slate-600">Generating your qr code...</p>
+                  <p className="text-slate-600">Processing your disposal...</p>
                 )}
               </div>
             )}
