@@ -1,7 +1,7 @@
 import QRCode from "qrcode";
 import { notFound } from "next/navigation";
 import { generateQrToken } from "@/lib/jwt-tokens";
-import { getUnscannedDisposal } from "@/app/action/disposal";
+import { getDisposal } from "@/app/action/disposal";
 import Image from "next/image";
 import { getLoggedInUserById } from "@/app/action/user";
 interface QRCodeComponentProps {
@@ -12,8 +12,8 @@ const QrCodeComponent = async ({
   disposalId,
   userId,
 }: QRCodeComponentProps) => {
-  const disposalData = await getUnscannedDisposal(disposalId);
-  if (!disposalData || "error" in disposalData) {
+  const disposalData = await getDisposal(disposalId);
+  if ("error" in disposalData) {
     notFound();
   }
   const binManager = await getLoggedInUserById(userId);

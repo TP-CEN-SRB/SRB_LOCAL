@@ -56,22 +56,25 @@ export const createDisposal = async (
   return { disposalId: id, point };
 };
 
-export const getUnscannedDisposal = async (id: string) => {
+export const getDisposal = async (id: string) => {
   const token = cookies().get("token");
-  const res = await fetch(
-    `${HOSTED_URL}/api/disposal/${id}?isRedeemed=${false}`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token?.value}`,
-      },
-    }
-  );
+  const res = await fetch(`${HOSTED_URL}/api/disposal/${id}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token?.value}`,
+    },
+  });
   if (res.status !== 200) {
     const { message }: { message: string } = await res.json();
     return { error: message };
   }
   const { disposal }: { disposal: Disposal } = await res.json();
+  if (!disposal) {
+    return { error: "Disposal not found" };
+  }
+  if (disposal.isRedeemed === true) {
+    return { error: "This disposal has already been redeemed!" };
+  }
   return disposal;
 };
