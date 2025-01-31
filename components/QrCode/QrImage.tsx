@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { generateQrToken } from "@/lib/jwt-tokens";
 import { getDisposal } from "@/app/action/disposal";
 import Image from "next/image";
-import { getLoggedInUserById } from "@/app/action/user";
 interface QRCodeComponentProps {
   disposalId: string;
   userId: string;
@@ -16,13 +15,9 @@ const QrCodeComponent = async ({
   if ("error" in disposalData) {
     notFound();
   }
-  const binManager = await getLoggedInUserById(userId);
-  if (!binManager || "error" in binManager) {
-    notFound();
-  }
   const data = {
     disposalId: disposalData.id,
-    userId: binManager.id,
+    userId: userId,
     material: disposalData.bin.binMaterial.name,
     weightInGrams: disposalData.weightInGrams,
     pointsAwarded: disposalData.pointsAwarded,

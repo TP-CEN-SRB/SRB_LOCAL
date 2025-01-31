@@ -1,4 +1,4 @@
-import HomeScreen from "@/components/HomeScreen";
+import HomeScreen from "@/components/Screen/HomeScreen";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 

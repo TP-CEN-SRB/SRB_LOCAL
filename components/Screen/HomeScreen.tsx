@@ -9,7 +9,7 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { FaPowerOff, FaRecycle, FaTrash } from "react-icons/fa";
-import SignOutDialog from "./Dialog/SignOutDialog";
+import SignOutDialog from "../Dialog/SignOutDialog";
 
 const HomeScreen = ({ id }: { id: string | undefined }) => {
   const binButtons = [

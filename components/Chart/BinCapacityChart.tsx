@@ -152,7 +152,7 @@ export default function BinCapacityChart({
           )}
 
           <ChartTooltip
-            content={<ChartTooltipContent />}
+            content={<ChartTooltipContent hideLabel />}
             cursor={false}
             defaultIndex={1}
           />

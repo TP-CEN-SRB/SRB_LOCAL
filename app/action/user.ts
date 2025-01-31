@@ -4,22 +4,6 @@ import { LoginSchema } from "@/schemas";
 import * as z from "zod";
 import jwt from "jsonwebtoken";
 import { HOSTED_URL } from "@/keys";
-type User = {
-  id: string;
-  email: string;
-  emailVerified: Date | null;
-  password: string;
-  name: string;
-  faculty: string;
-  apiKey: string | null;
-  role: "BIN" | "STUDENT" | "ADMIN";
-  lat: number | null;
-  long: number | null;
-  location: string | null;
-  commandUpdatedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
 
 const login = async (values: z.infer<typeof LoginSchema>) => {
   const validatedFields = LoginSchema.safeParse(values);
@@ -53,21 +37,4 @@ const login = async (values: z.infer<typeof LoginSchema>) => {
   });
 };
 
-const getLoggedInUserById = async (userId: string) => {
-  const token = cookies().get("token");
-  const res = await fetch(`${HOSTED_URL}/api/user/${userId}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token?.value}`,
-    },
-  });
-  if (res.status !== 200) {
-    const { message }: { message: string } = await res.json();
-    return { error: message };
-  }
-  const { user }: { user: User } = await res.json();
-  return user;
-};
-
-export { login, getLoggedInUserById };
+export { login };

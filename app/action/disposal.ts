@@ -27,6 +27,10 @@ type Disposal = {
     };
   };
 };
+type DisposalCounts = {
+  material: string;
+  count: number;
+};
 
 export const createDisposal = async (
   values: z.infer<typeof DisposalSchema>,
@@ -77,4 +81,21 @@ export const getDisposal = async (id: string) => {
     return { error: "This disposal has already been redeemed!" };
   }
   return disposal;
+};
+
+export const getDisposals = async () => {
+  const token = cookies().get("token");
+  const res = await fetch(`${HOSTED_URL}/api/disposal/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token?.value}`,
+    },
+  });
+  if (res.status !== 200) {
+    const { message }: { message: string } = await res.json();
+    return { error: message };
+  }
+  const { disposals }: { disposals: DisposalCounts[] } = await res.json();
+  return disposals;
 };

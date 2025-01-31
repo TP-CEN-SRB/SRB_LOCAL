@@ -1,27 +1,22 @@
-"use client";
+import { getDisposals } from "@/app/action/disposal";
 import Card from "@/components/Card/Card";
-import TimerRedirect from "@/components/TimerRedirect";
-import React, { useEffect } from "react";
-import useSound from "use-sound";
+import DisposalConfirmationCard from "@/components/Card/DisposalConfirmationCard";
+import BinDisposalChart from "@/components/Chart/BinDisposalChart";
+import { notFound } from "next/navigation";
 
-const DisposalConfirmationPage = ({ params }: { params: { id: string } }) => {
-  const [play, { sound, stop }] = useSound("/thankyou.mp3");
-  useEffect(() => {
-    play();
-    return () => stop();
-  }, [sound, play, stop]);
+const DisposalConfirmationPage = async ({
+  params,
+}: {
+  params: { id: string };
+}) => {
+  const disposals = await getDisposals();
+  if ("error" in disposals) {
+    notFound();
+  }
   return (
     <Card rounded>
-      <div className="flex flex-col items-center justify-center p-4">
-        <h1 className="text-slate-800">Thank You!</h1>
-        <h2 className="text-lg text-slate-600">
-          Your disposal has been recorded
-        </h2>
-        <TimerRedirect
-          redirectTo={`/idle-video/${params.id}`}
-          delayInMs={5000}
-        />
-      </div>
+      <DisposalConfirmationCard id={params.id} />
+      <BinDisposalChart disposals={disposals} />
     </Card>
   );
 };
