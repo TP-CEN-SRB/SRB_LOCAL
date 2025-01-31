@@ -1,12 +1,11 @@
 # Temasek Polytechnic Smart Recycling Bin(Major Project)
 
-## Installation
+## Installation Setup for Raspberry Pi
 
 First, ensure that you have the following installed:
 
 1. [Node.js 18.17](https://nodejs.org/en) or later
-2. Visual Studio Code
-3. Git
+2. Git
 
 Once you clone the repository, enter the following commands
 
@@ -17,7 +16,7 @@ npm install # install the necessary dependencies
 
 ## Setting up environent variables
 
-Ensure your `.env` has the following environment variables
+Ensure your `key.ts` has the following environment variables
 
 1. BASE_URL = "http://localhost:3000"
 2. HOSTED_URL = "https://major-project-tp.vercel.app/"
