@@ -7,6 +7,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { formatCompactNumber } from "@/util/numberFormatter";
 
 interface ChartProps {
   disposals: { count: number; material: string }[];
@@ -19,7 +20,10 @@ export default function BinDisposalChart({ disposals }: ChartProps) {
       color: "#22c55e",
     },
   } satisfies ChartConfig;
-
+  const formattedDisposals = disposals.map((disposal) => ({
+    ...disposal,
+    count: formatCompactNumber(disposal.count),
+  }));
   return (
     <div className="bg-white shadow-lg rounded-xl p-4">
       <h3 className="text-center font-semibold text-[#4B5563]">
@@ -28,7 +32,7 @@ export default function BinDisposalChart({ disposals }: ChartProps) {
       <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
         <BarChart
           accessibilityLayer
-          data={disposals}
+          data={formattedDisposals}
           margin={{
             top: 25,
           }}
