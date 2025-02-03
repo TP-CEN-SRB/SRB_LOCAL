@@ -20,19 +20,18 @@ export default function BinDisposalChart({ disposals }: ChartProps) {
       color: "#22c55e",
     },
   } satisfies ChartConfig;
-  const formattedDisposals = disposals.map((disposal) => ({
-    ...disposal,
-    count: formatCompactNumber(disposal.count),
-  }));
   return (
     <div className="bg-white shadow-lg rounded-xl p-4">
       <h3 className="text-center font-semibold text-[#4B5563]">
         🌱 See the Impact of Your Contribution! 🌍
       </h3>
-      <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+      <ChartContainer
+        config={chartConfig}
+        className="min-h-[200px] max-h-[200px] w-full"
+      >
         <BarChart
           accessibilityLayer
-          data={formattedDisposals}
+          data={disposals}
           margin={{
             top: 25,
           }}
@@ -55,6 +54,7 @@ export default function BinDisposalChart({ disposals }: ChartProps) {
               className="font-semibold"
               fontSize={12}
               fill="#1e293b"
+              formatter={(value: number) => formatCompactNumber(value)}
             />
           </Bar>
         </BarChart>
