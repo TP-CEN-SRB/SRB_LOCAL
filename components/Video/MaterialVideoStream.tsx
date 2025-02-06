@@ -83,16 +83,16 @@ const MaterialVideoStream = () => {
           ""
         );
         const rawData = atob(formattedBase64String);
-        const buffer = new Uint8Array(rawData.length);
-        console.log(rawData.toString());
-        for (let i = 0; i < rawData.length; i++) {
-          buffer[i] = rawData.charCodeAt(i);
-        }
+        // const buffer = new Uint8Array(rawData.length);
+        // console.log(rawData.toString());
+        // for (let i = 0; i < rawData.length; i++) {
+        //   buffer[i] = rawData.charCodeAt(i);
+        // }
         //console.log(buffer);
 
         // Create a Blob (image/jpeg)
-        const blob = new Blob([buffer], { type: "image/jpeg" });
-        const imageURL = URL.createObjectURL(blob);
+        // const blob = new Blob([buffer], { type: "image/jpeg" });
+        // const imageURL = URL.createObjectURL(blob);
         // Set the base64 string as the image URL (you can use this directly)
         //console.log(imageURL);
         setImageURL("data:image/jpeg;base64," + rawData.toString());
