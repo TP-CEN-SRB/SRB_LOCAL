@@ -19,7 +19,7 @@ npm install # install the necessary dependencies
 Ensure your `key.ts` has the following environment variables
 
 1. BASE_URL = "http://localhost:3000"
-2. HOSTED_URL = "https://major-project-tp.vercel.app/"
+2. HOSTED_URL = "https://cen-smart-bin.vercel.app"
 3. API_KEY = *****************************
 4. NEXT_JWT_SECRET_KEY = *****************************
 
