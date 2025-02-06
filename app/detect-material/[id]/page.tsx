@@ -145,14 +145,14 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
                 redirectTo={`/idle-video/${params.id}`}
               />
             )}
-            {/* {!error && !thrown && weightInGrams === undefined && (
+            {!error && !thrown && weightInGrams === undefined && (
               <TimerRedirect
                 delayInMs={60000}
                 resetTimeInMs={30000}
                 resetCondition={resetCondition}
                 redirectTo={`/idle-video/${params.id}`}
               />
-            )} */}
+            )}
           </Card>
         </div>
         <div className="flex-1 border-l border-b border-black">
