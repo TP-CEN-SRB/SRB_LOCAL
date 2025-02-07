@@ -184,14 +184,14 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
 };
 const recyclingSteps = [
   {
-    title: "Place your rubbish in the box",
+    title: "Place your rubbish in the center of the camera region",
     description:
       "Ensure the item is within the detection area for accurate scanning.",
   },
   {
     title: "Wait for the material to be detected",
     description:
-      "The system will automatically recognize and classify the material.",
+      "You may need to tilt the item if the system fails to recognize the material.",
   },
   {
     title: "Dispose your item in the designated bin",
