@@ -8,6 +8,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { formatCompactNumber } from "@/util/numberFormatter";
+import { FaGlobeAsia, FaRecycle } from "react-icons/fa";
 
 interface ChartProps {
   disposals: { count: number; material: string }[];
@@ -22,8 +23,9 @@ export default function BinDisposalChart({ disposals }: ChartProps) {
   } satisfies ChartConfig;
   return (
     <div className="bg-white shadow-lg rounded-xl p-4">
-      <h3 className="text-center font-semibold text-[#4B5563]">
-        🌱 See the Impact of Your Contribution! 🌍
+      <h3 className="font-semibold text-[#4B5563] flex items-center gap-2 justify-center">
+        <FaRecycle className="text-green-500" /> See the Impact of Your
+        Contribution! <FaGlobeAsia className="text-blue-500" />
       </h3>
       <ChartContainer
         config={chartConfig}
