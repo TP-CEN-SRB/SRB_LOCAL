@@ -39,3 +39,4 @@ const BinCapacityPage = async ({ params }: { params: { id: string } }) => {
 };
 
 export default BinCapacityPage;
+

@@ -8,6 +8,7 @@ const binRoutes = [
   "/disposal-qr",
   "/detect-material",
   "/bin-capacity",
+  "/leaderboard",
 ];
 // This function can be marked `async` if using `await` inside
 export function middleware(req: NextRequest) {
