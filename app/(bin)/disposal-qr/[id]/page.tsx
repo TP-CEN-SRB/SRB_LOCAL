@@ -24,7 +24,7 @@ const QrCodePage = ({
           <QrScanListener userId={params.id} />
         </CardBody>
         <TimerRedirect
-          redirectTo={`/leaderboard}`}
+          redirectTo={`/leaderboard`}
           // redirectTo={`/disposal-confirmation/${params.id}`}
           delayInMs={30000}
         />
