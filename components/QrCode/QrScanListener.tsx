@@ -13,7 +13,7 @@ const QrScanListener = ({ userId }: { userId: string }) => {
     pusherClient.subscribe(`disposal-qr-${userId}`);
     pusherClient.bind("disposal-update", (data: { updated: boolean }) => {
       if (data.updated === true) {
-        router.push(`/disposal-confirmation/${userId}`);
+        router.push(`/leaderboard/${userId}`);
       }
     });
     return () => {

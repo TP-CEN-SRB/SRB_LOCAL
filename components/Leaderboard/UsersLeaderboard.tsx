@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import confetti from "canvas-confetti";
+import ClientRedirect from "@/components/Redirect/ClientRedirect";
 
 type LeaderboardUser = {
   username: string;
@@ -12,13 +13,14 @@ type LeaderboardUser = {
   mostFrequentMaterial?: string;
 };
 
-const medalEmoji = ["🥇", "🥈", "🥉"];
 const rankNumberEmojis = ["4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
 
 const UsersLeaderboard = ({
   leaderBoardData,
+  id,
 }: {
   leaderBoardData: LeaderboardUser[];
+  id: string;
 }) => {
   const topThree = leaderBoardData.slice(0, 3);
   const nextSeven = leaderBoardData.slice(3, 10);
@@ -26,7 +28,6 @@ const UsersLeaderboard = ({
   const [animatedIndex, setAnimatedIndex] = useState<number | null>(null);
   const prevTopRef = useRef<LeaderboardUser[]>([]);
 
-  // 🎯 Trigger confetti manually
   const triggerConfetti = () => {
     confetti({
       particleCount: 150,
@@ -39,7 +40,6 @@ const UsersLeaderboard = ({
     const prevTop = prevTopRef.current;
     const currentTop = leaderBoardData.slice(0, 3);
 
-    // 🥇 Only trigger if a new user takes 1st place
     if (prevTop[0]?.userId !== currentTop[0]?.userId) {
       setAnimatedIndex(0);
       triggerConfetti();
@@ -55,14 +55,6 @@ const UsersLeaderboard = ({
         <h1 className="text-4xl font-bold text-[#2B3A1E] py-6 text-center flex items-center justify-center gap-4">
           🏆 Leaderboard 🏆
         </h1>
-
-        {/* 🎉 Celebrate button */}
-        <button
-          onClick={triggerConfetti}
-          className="mb-6 bg-[#9DC183] hover:bg-[#84aa6c] text-white font-semibold py-2 px-6 rounded-xl shadow"
-        >
-          🎉 Celebrate!
-        </button>
 
         {/* Top 3 Section */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
@@ -140,6 +132,9 @@ const UsersLeaderboard = ({
           </tbody>
         </table>
       </div>
+
+      {/* Silent auto-redirect after 3 seconds */}
+      <ClientRedirect to={`/idle-video/${id}`} delay={3000} />
     </div>
   );
 };

@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import { HOSTED_URL } from "@/keys";
 import UsersLeaderboard from "@/components/Leaderboard/UsersLeaderboard";
-import ClientRedirect from "@/components/Redirect/ClientRedirect"; 
 
 const getLeaderboardData = async (token: string) => {
   const res = await fetch(`${HOSTED_URL}/api/leaderboard`, {
@@ -33,10 +32,7 @@ const LeaderboardPage = async ({ params }: { params: { id: string } }) => {
   const data = await getLeaderboardData(token);
 
   return (
-    <>
-      <UsersLeaderboard leaderBoardData={data} />
-      <ClientRedirect to={`/idle-video/${params.id}`} delay={3000} />
-    </>
+    <UsersLeaderboard leaderBoardData={data} id={params.id} />
   );
 };
 
