@@ -1,23 +1,22 @@
 "use client";
 import { useState, useEffect } from "react";
-import { FadeLoader, RingLoader } from "react-spinners";
+import { FadeLoader, RingLoader, BeatLoader } from "react-spinners";
 import Card from "@/components/Card/Card";
 import CardHeader from "@/components/Card/CardHeader";
 import CardBody from "@/components/Card/CardBody";
 import { useRouter } from "next/navigation";
-import { BeatLoader } from "react-spinners";
 import { createDisposal } from "@/app/action/disposal";
 import TimerRedirect from "@/components/TimerRedirect";
 import { pusherClient } from "@/lib/pusher";
 import { getBinByUserIdAndMaterial } from "@/app/action/bin";
 import MaterialVideoStream from "@/components/Video/MaterialVideoStream";
+import { logError } from "@/lib/logError";
 
 const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
   const [detecting, setDetecting] = useState(true);
   const [material, setMaterial] = useState("");
   const [weightInGrams, setWeightInGrams] = useState<number>();
   const [resetCondition, setResetCondition] = useState(false);
-
   const [error, setError] = useState<string>();
   const [thrown, setThrown] = useState(false);
   const router = useRouter();
@@ -29,34 +28,36 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
         if (!bin || "error" in bin) {
           setDetecting(false);
           setError(bin.error);
+          await logError("BIN_LOOKUP_FAIL", `Material: ${material}, UserId: ${params.id}, Error: ${bin.error}`);
           return;
         }
         if (bin.currentCapacity === 100) {
           setDetecting(false);
           setError(`${bin.binMaterial.name} bin is already full!`);
+          await logError("BIN_FULL", `Material: ${material}, UserId: ${params.id}`);
           return;
         }
         if (bin.status === "UNDER_MAINTENANCE") {
           setDetecting(false);
           setError(`${bin.binMaterial.name} bin is under maintenance!`);
+          await logError("BIN_MAINTENANCE", `Material: ${material}, UserId: ${params.id}`);
           return;
         }
       }
     };
     checkIfBinIsInOrder();
   }, [params.id, material]);
+
   useEffect(() => {
     const handleDisposal = async () => {
       if (thrown === true && material && weightInGrams) {
         const { disposalId, point, error } = await createDisposal(
-          {
-            material,
-            weightInGrams,
-          },
+          { material, weightInGrams },
           params.id
         );
         if (error !== null && error !== undefined) {
           setError(error);
+          await logError("DISPOSAL_FAIL", `Material: ${material}, Weight: ${weightInGrams}, UserId: ${params.id}, Error: ${error}`);
         } else if (point > 0) {
           router.push(`/disposal-qr/${params.id}?disposalId=${disposalId}`);
         } else {
@@ -64,13 +65,9 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
         }
       }
     };
-
     handleDisposal();
   }, [thrown, material, params.id, router, weightInGrams]);
 
-  /**
-   *Pusher
-   */
   useEffect(() => {
     pusherClient.subscribe(`detect-material-${params.id}`);
     pusherClient.bind(
@@ -182,6 +179,7 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
     </div>
   );
 };
+
 const recyclingSteps = [
   {
     title: "Place your rubbish in the center of the camera region",
