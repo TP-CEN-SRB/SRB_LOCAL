@@ -15,51 +15,36 @@ export const POST = async (
         { status: 401 }
       );
     }
-    const { material, weightInGrams, thrown } = await req.json();
-    const bin = await getBinByUserIdAndMaterial(params.id, material);
-    await pusherServer.trigger(
-      `detect-material-${params.id}`,
-      "material-details",
-      {
+
+    const body = await req.json();
+    const detections = Array.isArray(body)
+      ? body
+      : [body]; // support both single and multi
+
+    for (const { material, weightInGrams, thrown } of detections) {
+      if (!material) continue;
+
+      const bin = await getBinByUserIdAndMaterial(params.id, material);
+      if (!bin || "error" in bin) continue;
+      if (bin.currentCapacity === 100 || bin.status === "UNDER_MAINTENANCE")
+        continue;
+
+      await pusherServer.trigger(`detect-material-${params.id}`, "material-details", {
         material,
         weightInGrams,
         thrown,
-      }
-    );
-    if (weightInGrams && thrown === true) {
-      return NextResponse.json(
-        { message: "Material details received" },
-        { status: 200 }
-      );
+      });
     }
-    if (!bin || "error" in bin) {
-      return NextResponse.json({ message: bin.error }, { status: 400 });
-    }
-    if (bin.currentCapacity === 100) {
-      return NextResponse.json(
-        { message: `${bin.binMaterial.name} bin is already full!` },
-        { status: 400 }
-      );
-    }
-    if (bin.status === "UNDER_MAINTENANCE") {
-      return NextResponse.json(
-        {
-          message: `${bin.binMaterial.name} bin is under maintenance!`,
-        },
-        { status: 400 }
-      );
-    }
+
     return NextResponse.json(
-      { message: "Material details received" },
+      { message: "All material details processed" },
       { status: 200 }
     );
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json({ message: error.message }, { status: 500 });
-    }
     return NextResponse.json(
-      { message: "An unknown error occurred" },
+      { message: error instanceof Error ? error.message : "An unknown error occurred" },
       { status: 500 }
     );
   }
 };
+
