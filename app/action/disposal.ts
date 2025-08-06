@@ -11,7 +11,7 @@ type Disposal = {
   binId: string;
   isRedeemed: boolean;
   pointsAwarded: number;
-  carbonprint: number; 
+  carbonprint: number;
   userId: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -31,7 +31,6 @@ type Disposal = {
   };
 };
 
-
 type DisposalCounts = {
   material: string;
   count: number;
@@ -46,6 +45,7 @@ export const createDisposal = async (
   if (!validatedFields.success) {
     return { error: "Invalid fields!" };
   }
+
   const { material, weightInGrams } = validatedFields.data;
 
   const res = await fetch(`${HOSTED_URL}/api/disposal`, {
@@ -62,8 +62,8 @@ export const createDisposal = async (
     return { error: message };
   }
 
-  const { id, point }: { id: string; point: number } = await res.json();
-  return { disposalId: id, point };
+  const { id, point, queueId }: { id: string; point: number; queueId: string } = await res.json();
+  return { disposalId: id, point, queueId };
 };
 
 export const createMultiDisposal = async (
@@ -86,10 +86,19 @@ export const createMultiDisposal = async (
     return { error: message };
   }
 
-  const { records, totalPoints }: { records: { id: string }[]; totalPoints: number } = await res.json();
+  const {
+    records,
+    totalPoints,
+    queueId,
+  }: {
+    records: { id: string }[];
+    totalPoints: number;
+    queueId: string;
+  } = await res.json();
+
   const disposalIds = records.map((d) => d.id);
 
-  return { disposalIds, totalPoints };
+  return { disposalIds, totalPoints, queueId };
 };
 
 export const getDisposal = async (id: string) => {
@@ -137,5 +146,23 @@ export const getDisposals = async () => {
   }
 
   const { disposals }: { disposals: DisposalCounts[] } = await res.json();
+  return disposals;
+};
+
+export const getDisposalsByQueue = async (queueId: string) => {
+  const token = cookies().get("token");
+
+  const res = await fetch(`${HOSTED_URL}/api/disposal/queue/${queueId}`, {
+    headers: {
+      Authorization: `Bearer ${token?.value}`,
+    },
+  });
+
+  if (!res.ok) {
+    const { message } = await res.json();
+    return { error: message };
+  }
+
+  const { disposals } = await res.json();
   return disposals;
 };

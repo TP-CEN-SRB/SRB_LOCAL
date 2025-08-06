@@ -14,21 +14,21 @@ const QrCodePage = ({
   params: { id: string };
   searchParams: { [key: string]: string };
 }) => {
-  const isMulti = searchParams.multi === "true";
-  const disposalIds = isMulti
-    ? searchParams.ids?.split(",").filter(Boolean)
-    : [searchParams.disposalId];
+  const queueId = searchParams.queueId;
 
-  const qrPayload = isMulti
-    ? {
-        multi: true,
-        userId: params.id,
-        disposalIds,
-      }
-    : {
-        userId: params.id,
-        disposalId: disposalIds[0],
-      };
+  // ⚠️ If queueId is missing, render error or redirect
+  if (!queueId) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-lg text-red-500">
+        Missing queue ID!
+      </div>
+    );
+  }
+
+  const qrPayload = {
+    userId: params.id,
+    queueId, 
+  };
 
   return (
     <div className="flex flex-col items-center">

@@ -9,11 +9,10 @@ import CardBody from "@/components/Card/CardBody";
 import TimerRedirect from "@/components/TimerRedirect";
 import MaterialVideoStream from "@/components/Video/MaterialVideoStream";
 
-import { createDisposal } from "@/app/action/disposal";
+import { createDisposal, createMultiDisposal } from "@/app/action/disposal";
 import { getBinByUserIdAndMaterial } from "@/app/action/bin";
 import { logError } from "@/lib/logError";
 import { pusherClient } from "@/lib/pusher";
-
 
 type DetectionData = {
   material: string;
@@ -38,60 +37,59 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
   >([]);
   const isProcessing = useRef(false);
 
-  const validateBinStatus = useCallback(async (mat: string) => {
-    const bin = await getBinByUserIdAndMaterial(params.id, mat);
-    if (!bin || "error" in bin) {
-      setError(bin?.error || "Invalid bin");
-      return false;
-    }
-    if (bin.currentCapacity === 100) {
-      setError(`${bin.binMaterial.name} bin is already full!`);
-      return false;
-    }
-    if (bin.status === "UNDER_MAINTENANCE") {
-      setError(`${bin.binMaterial.name} bin is under maintenance!`);
-      return false;
-    }
-    return true;
-  }, [params.id]);
+  const validateBinStatus = useCallback(
+    async (mat: string) => {
+      const bin = await getBinByUserIdAndMaterial(params.id, mat);
+      if (!bin || "error" in bin) {
+        setError(bin?.error || "Invalid bin");
+        return false;
+      }
+      if (bin.currentCapacity === 100) {
+        setError(`${bin.binMaterial.name} bin is already full!`);
+        return false;
+      }
+      if (bin.status === "UNDER_MAINTENANCE") {
+        setError(`${bin.binMaterial.name} bin is under maintenance!`);
+        return false;
+      }
+      return true;
+    },
+    [params.id]
+  );
 
   const handleNextDisposal = useCallback(async () => {
-    if (isProcessing.current || multiDetectionQueue.length === 0) return;
+    if (isProcessing.current || multiDetectionQueue.length === 0 || multiDisposalIds.length > 0) return;
 
     isProcessing.current = true;
 
-    const { material, weightInGrams } = multiDetectionQueue[0];
-    const valid = await validateBinStatus(material);
-    if (!valid) {
-      isProcessing.current = false;
-      return;
-    }
+    const validDisposals: { material: string; weightInGrams: number }[] = [];
 
-    const { disposalId, error } = await createDisposal({ material, weightInGrams }, params.id);
-    if (error || !disposalId) {
-      setError(error || "Disposal failed!");
-      await logError("DISPOSAL_FAIL", `Material: ${material}, UserId: ${params.id}, Error: ${error}`);
-      isProcessing.current = false;
-      return;
-    }
-
-    setMultiDisposalIds((prev) => {
-      const updated = [...prev, disposalId];
-      if (updated.length === multiDetectionQueue.length) {
-        router.push(`/disposal-qr/${params.id}?multi=true&ids=${updated.join(",")}`);
+    for (const item of multiDetectionQueue) {
+      const valid = await validateBinStatus(item.material);
+      if (!valid) {
+        isProcessing.current = false;
+        return;
       }
-      return updated;
-    });
+      validDisposals.push(item);
+    }
 
-    setMultiDetectionQueue((prev) => prev.slice(1));
-    isProcessing.current = false;
-  }, [multiDetectionQueue, params.id, router, validateBinStatus]);
+    const result = await createMultiDisposal(validDisposals, params.id);
+
+    if ("error" in result) {
+      setError(result.error);
+      await logError("MULTI_DISPOSAL_FAIL", `UserId: ${params.id}, Error: ${result.error}`);
+      isProcessing.current = false;
+      return;
+    }
+
+    router.push(`/disposal-qr/${params.id}?queueId=${result.queueId}`);
+  }, [multiDetectionQueue, multiDisposalIds.length, params.id, router, validateBinStatus]);
 
   useEffect(() => {
-    if (isMultiMode && multiDetectionQueue.length > 0) {
+    if (isMultiMode && multiDetectionQueue.length > 0 && multiDisposalIds.length === 0) {
       handleNextDisposal();
     }
-  }, [multiDetectionQueue, isMultiMode, handleNextDisposal]);
+  }, [multiDetectionQueue, isMultiMode, handleNextDisposal, multiDisposalIds.length]);
 
   useEffect(() => {
     pusherClient.subscribe(`detect-material-${params.id}`);
@@ -128,15 +126,15 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
         const valid = await validateBinStatus(mat);
         if (!valid) return;
 
-        const { disposalId, point, error } = await createDisposal(
+        const { disposalId, point, queueId, error } = await createDisposal(
           { material: mat, weightInGrams: data.weightInGrams },
           params.id
         );
 
-        if (error || !disposalId) {
+        if (error || !disposalId || !queueId) {
           setError(error || "Disposal failed!");
         } else if (typeof point === "number" && point > 0) {
-          router.push(`/disposal-qr/${params.id}?disposalId=${disposalId}`);
+          router.push(`/disposal-qr/${params.id}?queueId=${queueId}`);
         } else {
           router.push(`/disposal-confirmation/${params.id}`);
         }
@@ -232,18 +230,15 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
 const recyclingSteps = [
   {
     title: "Place your rubbish in the center of the camera region",
-    description:
-      "Ensure the item is within the detection area for accurate scanning.",
+    description: "Ensure the item is within the detection area for accurate scanning.",
   },
   {
     title: "Wait for the material to be detected",
-    description:
-      "You may need to tilt the item if the system fails to recognize the material.",
+    description: "You may need to tilt the item if the system fails to recognize the material.",
   },
   {
     title: "Dispose your item in the designated bin",
-    description:
-      "The correct bin will open based on the type of material detected.",
+    description: "The correct bin will open based on the type of material detected.",
   },
   {
     title: "Scan the generated QR code",
