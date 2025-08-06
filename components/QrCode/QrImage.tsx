@@ -18,7 +18,6 @@ const QrCodeComponent = async ({ payload }: QrCodeComponentProps) => {
   }
 
   const token = generateQrToken({
-    userId,
     queueId,
   });
 

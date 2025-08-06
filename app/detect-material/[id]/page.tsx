@@ -73,7 +73,7 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
       validDisposals.push(item);
     }
 
-    const result = await createMultiDisposal(validDisposals, params.id);
+    const result = await createMultiDisposal(validDisposals);
 
     if ("error" in result) {
       setError(result.error);
@@ -126,10 +126,10 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
         const valid = await validateBinStatus(mat);
         if (!valid) return;
 
-        const { disposalId, point, queueId, error } = await createDisposal(
-          { material: mat, weightInGrams: data.weightInGrams },
-          params.id
-        );
+        const { disposalId, point, queueId, error } = await createDisposal({
+          material: mat,
+          weightInGrams: data.weightInGrams,
+        });
 
         if (error || !disposalId || !queueId) {
           setError(error || "Disposal failed!");

@@ -1,11 +1,12 @@
 import { NEXT_JWT_SECRET_KEY } from "@/keys";
 import jwt from "jsonwebtoken";
 
-type StandardQrPayload = {
-  userId: string;
-  queueId: string;
+type QueueQrPayload = {
+  queueId: string;  // Only queueId is embedded in the QR token
 };
 
-export const generateQrToken = (data: StandardQrPayload) => {
-  return jwt.sign(data, NEXT_JWT_SECRET_KEY, { expiresIn: "1h" });
+export const generateQrToken = (data: QueueQrPayload) => {
+  return jwt.sign(data, NEXT_JWT_SECRET_KEY, {
+    expiresIn: "1h",
+  });
 };

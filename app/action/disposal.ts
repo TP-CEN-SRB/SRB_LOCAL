@@ -37,11 +37,11 @@ type DisposalCounts = {
 };
 
 export const createDisposal = async (
-  values: z.infer<typeof DisposalSchema>,
-  userId: string
+  values: z.infer<typeof DisposalSchema>
 ) => {
   const token = cookies().get("token");
   const validatedFields = DisposalSchema.safeParse(values);
+
   if (!validatedFields.success) {
     return { error: "Invalid fields!" };
   }
@@ -54,7 +54,7 @@ export const createDisposal = async (
       "Content-Type": "application/json",
       Authorization: `Bearer ${token?.value}`,
     },
-    body: JSON.stringify({ userId, material, weightInGrams }),
+    body: JSON.stringify({ material, weightInGrams }),
   });
 
   if (res.status !== 200) {
@@ -62,13 +62,14 @@ export const createDisposal = async (
     return { error: message };
   }
 
-  const { id, point, queueId }: { id: string; point: number; queueId: string } = await res.json();
+  const { id, point, queueId }: { id: string; point: number; queueId: string } =
+    await res.json();
+
   return { disposalId: id, point, queueId };
 };
 
 export const createMultiDisposal = async (
-  payloads: Array<z.infer<typeof DisposalSchema>>,
-  userId: string
+  payloads: Array<z.infer<typeof DisposalSchema>>
 ) => {
   const token = cookies().get("token");
 
@@ -78,7 +79,7 @@ export const createMultiDisposal = async (
       "Content-Type": "application/json",
       Authorization: `Bearer ${token?.value}`,
     },
-    body: JSON.stringify({ userId, disposals: payloads }),
+    body: JSON.stringify({ disposals: payloads }),
   });
 
   if (res.status !== 200) {
