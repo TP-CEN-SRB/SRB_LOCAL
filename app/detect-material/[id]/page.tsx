@@ -27,8 +27,11 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
         const bin = await getBinByUserIdAndMaterial(params.id, material);
         if (!bin || "error" in bin) {
           setDetecting(false);
-          setError(bin.error);
-          await logError("BIN_LOOKUP_FAIL", `Material: ${material}, UserId: ${params.id}, Error: ${bin.error}`);
+          setError((bin as any)?.error ?? "Failed to find bin.");
+          await logError(
+            "BIN_LOOKUP_FAIL",
+            `Material: ${material}, UserId: ${params.id}, Error: ${(bin as any)?.error}`
+          );
           return;
         }
         if (bin.currentCapacity === 100) {
@@ -51,18 +54,22 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
   useEffect(() => {
     const handleDisposal = async () => {
       if (thrown === true && material && weightInGrams) {
-        const { disposalId, point, error } = await createDisposal(
+        const result = await createDisposal(
           { material, weightInGrams },
           params.id
         );
-        if (error !== null && error !== undefined) {
-          setError(error);
-          await logError("DISPOSAL_FAIL", `Material: ${material}, Weight: ${weightInGrams}, UserId: ${params.id}, Error: ${error}`);
-        } else if (point > 0) {
-          router.push(`/disposal-qr/${params.id}?disposalId=${disposalId}`);
-        } else {
-          router.push(`/disposal-confirmation/${params.id}`);
+
+        if ("error" in result) {
+          setError(result.error);
+          await logError(
+            "DISPOSAL_FAIL",
+            `Material: ${material}, Weight: ${weightInGrams}, UserId: ${params.id}, Error: ${result.error}`
+          );
+          return;
         }
+
+        // Always redirect by queueId (single or multi)
+        router.push(`/disposal-qr/${params.id}?queueId=${result.queueId}`);
       }
     };
     handleDisposal();
@@ -72,23 +79,26 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
     pusherClient.subscribe(`detect-material-${params.id}`);
     pusherClient.bind(
       "material-details",
-      (data: { material: string; weightInGrams: number; thrown: boolean }) => {
+      (data: { material?: string; weightInGrams?: number; thrown?: boolean }) => {
+        // Phase 1: only material detected
         if (
           data.thrown === undefined &&
           data.material &&
           data.weightInGrams === undefined
         ) {
-          setMaterial(data.material.toUpperCase() as string);
+          setMaterial(data.material.toUpperCase());
           setDetecting(false);
           setResetCondition(true);
         }
+
+        // Phase 2: confirmed throw with weight
         if (
           material &&
           data.weightInGrams !== undefined &&
           data.thrown === true
         ) {
           setWeightInGrams(data.weightInGrams);
-          setThrown(data.thrown);
+          setThrown(true);
         }
       }
     );
@@ -96,7 +106,7 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
       pusherClient.unbind("material-details");
       pusherClient.unsubscribe(`detect-material-${params.id}`);
     };
-  }, [material, weightInGrams, thrown, params.id, router]);
+  }, [material, params.id]);
 
   return (
     <div className="flex w-screen h-screen bg-center bg-[var(--pastel-green)]">

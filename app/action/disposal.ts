@@ -3,6 +3,10 @@ import { HOSTED_URL } from "@/keys";
 import { DisposalSchema } from "@/schemas";
 import { cookies } from "next/headers";
 import * as z from "zod";
+
+type SingleInput = z.infer<typeof DisposalSchema>;
+type BatchInput = Array<z.infer<typeof DisposalSchema>>;
+
 type Disposal = {
   id: string;
   weightInGrams: number;
@@ -27,37 +31,93 @@ type Disposal = {
     };
   };
 };
+
+type CreateDisposalResult =
+  | {
+      mode: "single";
+      queueId: string;
+      disposalId: string;
+      point: number;
+    }
+  | {
+      mode: "multi";
+      queueId: string;
+      disposalIds: string[];
+      totalPoints: number;
+      pointsPerItem?: number[];
+    }
+  | { error: string };
+
 type DisposalCounts = {
   material: string;
   count: number;
 };
 
 export const createDisposal = async (
-  values: z.infer<typeof DisposalSchema>,
+  values: SingleInput | BatchInput,
   userId: string
-) => {
-  // Check if user has permission
+): Promise<CreateDisposalResult> => {
   const token = cookies().get("token");
-  const validatedFields = DisposalSchema.safeParse(values);
-  if (!validatedFields.success) {
-    return { error: "Invalid fields!" };
-  }
-  const { material, weightInGrams } = validatedFields.data;
+
+  // Normalize to array and validate each with your existing schema
+  const items = (Array.isArray(values) ? values : [values]).map((v) => {
+    const ok = DisposalSchema.safeParse(v);
+    if (!ok.success) throw new Error("Invalid fields!");
+    return ok.data;
+  });
+
   const res = await fetch(`${HOSTED_URL}/api/disposal`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token?.value}`,
     },
-    body: JSON.stringify({ userId, material, weightInGrams }),
+    body: JSON.stringify({
+      userId,
+      items: items.map(({ material, weightInGrams }) => ({
+        material,
+        weightInGrams,
+      })),
+    }),
   });
-  if (res.status !== 200) {
-    const { message }: { message: string } = await res.json();
-    return { error: message };
+
+  if (!res.ok) {
+    const { message }: { message?: string } = await res.json().catch(() => ({}));
+    return { error: message ?? "Failed to create disposal(s)." };
   }
-  // retrieve the disposalId and points awarded
-  const { id, point }: { id: string; point: number } = await res.json();
-  return { disposalId: id, point };
+
+  // Expected unified response from API:
+  // {
+  //   queueId: string,
+  //   disposalIds: string[],
+  //   totalPoints: number,
+  //   pointsPerItem?: number[]
+  // }
+  const data = await res.json();
+
+  if (!data?.queueId || !Array.isArray(data.disposalIds)) {
+    return { error: "Malformed API response." };
+  }
+
+  if (data.disposalIds.length === 1) {
+    return {
+      mode: "single",
+      queueId: data.queueId,
+      disposalId: data.disposalIds[0],
+      point:
+        Array.isArray(data.pointsPerItem) && data.pointsPerItem.length > 0
+          ? data.pointsPerItem[0]
+          : data.totalPoints ?? 0,
+    };
+  }
+
+  return {
+    mode: "multi",
+    queueId: data.queueId,
+    disposalIds: data.disposalIds,
+    totalPoints: data.totalPoints ?? 0,
+    pointsPerItem: data.pointsPerItem,
+  };
 };
 
 export const getDisposal = async (id: string) => {
