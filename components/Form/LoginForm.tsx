@@ -35,6 +35,7 @@ const LoginForm = () => {
     startTransition(async () => {
       setError(""); // clear error message
       const data = await login(values);
+      console.log("🔑 Token from login action:", data?.token);
       setError(data?.error as string);
       if (!data?.error) {
         router.push("/");

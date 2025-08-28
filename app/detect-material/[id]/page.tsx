@@ -1,11 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FadeLoader, RingLoader, BeatLoader } from "react-spinners";
 import Card from "@/components/Card/Card";
 import CardHeader from "@/components/Card/CardHeader";
 import CardBody from "@/components/Card/CardBody";
 import { useRouter } from "next/navigation";
-import { createDisposal } from "@/app/action/disposal";
+import { createDisposal, closeQueue } from "@/app/action/disposal";
 import TimerRedirect from "@/components/TimerRedirect";
 import { pusherClient } from "@/lib/pusher";
 import { getBinByUserIdAndMaterial } from "@/app/action/bin";
@@ -19,94 +19,251 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
   const [resetCondition, setResetCondition] = useState(false);
   const [error, setError] = useState<string>();
   const [thrown, setThrown] = useState(false);
-  const router = useRouter();
+  const [queueId, setQueueId] = useState<string>();
+  const [disposals, setDisposals] = useState<
+    { material: string; weightInGrams?: number; thrown: boolean }[]
+  >([]);
+  const [completed, setCompleted] = useState(0);
+  const [finished, setFinished] = useState(false); // ✅ freeze flag
 
+  const router = useRouter();
+  const processed = useRef<Set<string>>(new Set());
+
+  // --- Bin checks
   useEffect(() => {
+    if (finished) return; // 🚫 no more bin checks
+
     const checkIfBinIsInOrder = async () => {
       if (material) {
+        console.log("🔎 Checking bin for material:", material);
         const bin = await getBinByUserIdAndMaterial(params.id, material);
+        console.log("📦 Bin lookup result:", bin);
+
         if (!bin || "error" in bin) {
           setDetecting(false);
-          setError((bin as any)?.error ?? "Failed to find bin.");
+          setError(bin?.error ?? "Bin not found");
           await logError(
             "BIN_LOOKUP_FAIL",
-            `Material: ${material}, UserId: ${params.id}, Error: ${(bin as any)?.error}`
+            `Material: ${material}, UserId: ${params.id}, Error: ${bin?.error}`
           );
           return;
         }
         if (bin.currentCapacity === 100) {
           setDetecting(false);
           setError(`${bin.binMaterial.name} bin is already full!`);
-          await logError("BIN_FULL", `Material: ${material}, UserId: ${params.id}`);
+          await logError(
+            "BIN_FULL",
+            `Material: ${material}, UserId: ${params.id}`
+          );
           return;
         }
         if (bin.status === "UNDER_MAINTENANCE") {
           setDetecting(false);
           setError(`${bin.binMaterial.name} bin is under maintenance!`);
-          await logError("BIN_MAINTENANCE", `Material: ${material}, UserId: ${params.id}`);
+          await logError(
+            "BIN_MAINTENANCE",
+            `Material: ${material}, UserId: ${params.id}`
+          );
           return;
         }
       }
     };
     checkIfBinIsInOrder();
-  }, [params.id, material]);
+  }, [params.id, material, finished]);
 
+  // --- Track disposals array
   useEffect(() => {
-    const handleDisposal = async () => {
-      if (thrown === true && material && weightInGrams) {
-        const result = await createDisposal(
-          { material, weightInGrams },
-          params.id
-        );
+    if (finished) return;
 
-        if ("error" in result) {
-          setError(result.error);
-          await logError(
-            "DISPOSAL_FAIL",
-            `Material: ${material}, Weight: ${weightInGrams}, UserId: ${params.id}, Error: ${result.error}`
-          );
-          return;
+    // 🚀 If all done, mark session finished right away
+    if (completed > 0 && disposals.length > 0 && completed === disposals.length) {
+      console.log("✅ All disposals completed → marking finished early");
+      setFinished(true); // 🔑 freezes pipeline immediately
+      return;
+    }
+
+    console.log("♻️ Disposals updated:", disposals);
+
+    const nextUnthrown = disposals.find((d) => !d.thrown);
+    if (nextUnthrown) {
+      console.log("➡️ Next unthrown disposal:", nextUnthrown);
+      setMaterial(nextUnthrown.material.toUpperCase());
+      setWeightInGrams(nextUnthrown.weightInGrams ?? undefined);
+      setThrown(false);
+      setDetecting(false);
+      setResetCondition(true);
+    }
+  }, [disposals, completed, finished]);
+
+  // --- Close queue and redirect once all disposals are processed
+  useEffect(() => {
+    const finishSession = async () => {
+      if (
+        !finished &&
+        completed > 0 &&
+        disposals.length > 0 &&
+        completed === disposals.length &&
+        queueId
+      ) {
+        console.log("🔒 Closing queue before redirect:", queueId);
+
+        // 🚀 freeze pipeline immediately
+        setFinished(true);
+
+        const result = await closeQueue(queueId);
+        if (result?.error) {
+          console.error("⚠️ Failed to close queue:", result.error);
+        } else {
+          console.log("✅ Queue closed successfully:", queueId);
         }
 
-        // Always redirect by queueId (single or multi)
-        router.push(`/disposal-qr/${params.id}?queueId=${result.queueId}`);
+        router.push(`/disposal-qr/${params.id}?queueId=${queueId}`);
       }
     };
-    handleDisposal();
-  }, [thrown, material, params.id, router, weightInGrams]);
 
+    finishSession();
+  }, [completed, disposals, queueId, params.id, router, finished]);
+
+  // --- Mark as thrown when weight is set
   useEffect(() => {
+    if (finished) return; // 🚫 no more marking
+    if (weightInGrams && !thrown) {
+      console.log("📏 Weight detected, marking as thrown:", weightInGrams);
+      setThrown(true);
+    }
+  }, [weightInGrams, thrown, finished]);
+
+  // --- Disposal creation
+  useEffect(() => {
+    if (finished) return; // 🚫 freeze disposal creation
+    if (completed >= disposals.length && disposals.length > 0) return;
+
+    const handleDisposal = async () => {
+      console.log("⚡ handleDisposal triggered:", {
+        thrown,
+        material,
+        weightInGrams,
+        queueId,
+      });
+
+      if (!thrown || !material || !weightInGrams || !queueId) {
+        console.log("⏸️ Skipping incomplete disposal");
+        return;
+      }
+
+      const key = `${queueId}-${material.toUpperCase()}-${weightInGrams}`;
+      if (processed.current.has(key)) {
+        console.log("⏭️ Duplicate disposal skipped:", key);
+        return;
+      }
+      processed.current.add(key);
+
+      console.log("🗑️ Processing disposal:", {
+        material,
+        weightInGrams,
+        queueId,
+      });
+      const { point, error } = await createDisposal(
+        { material, weightInGrams },
+        params.id,
+        queueId
+      );
+
+      if (error) {
+        console.error("❌ Disposal error:", error);
+        setError(error);
+        await logError(
+          "DISPOSAL_FAIL",
+          `Material: ${material}, Weight: ${weightInGrams}, UserId: ${params.id}, Error: ${error}`
+        );
+      } else {
+        console.log("✅ Disposal succeeded, points awarded:", point);
+        setCompleted((prev) => prev + 1); // simplified ✅
+        setDisposals((prev) => {
+          const updated = [...prev];
+          const idx = updated.findIndex(
+            (d) =>
+              d.material.toUpperCase() === material.toUpperCase() && !d.thrown
+          );
+          if (idx !== -1) {
+            updated[idx] = { ...updated[idx], thrown: true, weightInGrams };
+          }
+          return updated;
+        });
+      }
+
+      setThrown(false);
+      setWeightInGrams(undefined);
+    };
+
+    handleDisposal();
+  }, [
+    thrown,
+    material,
+    weightInGrams,
+    queueId,
+    params.id,
+    completed,
+    disposals.length,
+    finished,
+  ]);
+
+  // --- Pusher subscription
+  useEffect(() => {
+    if (finished) return; // 🚫 no subscription after finished
+    console.log("📡 Subscribing to channel:", `detect-material-${params.id}`);
     pusherClient.subscribe(`detect-material-${params.id}`);
+
     pusherClient.bind(
       "material-details",
-      (data: { material?: string; weightInGrams?: number; thrown?: boolean }) => {
-        // Phase 1: only material detected
-        if (
-          data.thrown === undefined &&
-          data.material &&
-          data.weightInGrams === undefined
-        ) {
-          setMaterial(data.material.toUpperCase());
-          setDetecting(false);
-          setResetCondition(true);
+      (data: {
+        queueId: string;
+        disposals: {
+          material: string;
+          weightInGrams?: number;
+          thrown: boolean;
+        }[];
+      }) => {
+        console.log("📩 Received from Pusher:", data);
+
+        if (data.queueId !== queueId) {
+          console.log("🔄 New queue detected:", data.queueId);
+          processed.current.clear();
+          setCompleted(0);
+          setDisposals([]);
+          setQueueId(data.queueId);
         }
 
-        // Phase 2: confirmed throw with weight
-        if (
-          material &&
-          data.weightInGrams !== undefined &&
-          data.thrown === true
-        ) {
-          setWeightInGrams(data.weightInGrams);
-          setThrown(true);
-        }
+        setDisposals((prev) => {
+          const merged = [...prev];
+          for (const d of data.disposals) {
+            const idx = merged.findIndex(
+              (x) => x.material.toUpperCase() === d.material.toUpperCase()
+            );
+            if (idx >= 0) {
+              merged[idx] = {
+                ...merged[idx],
+                weightInGrams: d.weightInGrams ?? merged[idx].weightInGrams,
+              };
+            } else {
+              merged.push({
+                material: d.material,
+                weightInGrams: d.weightInGrams,
+                thrown: false,
+              });
+            }
+          }
+          return merged;
+        });
       }
     );
+
     return () => {
+      console.log("❌ Unsubscribing from channel:", `detect-material-${params.id}`);
       pusherClient.unbind("material-details");
       pusherClient.unsubscribe(`detect-material-${params.id}`);
     };
-  }, [material, params.id]);
+  }, [params.id, queueId, finished]);
 
   return (
     <div className="flex w-screen h-screen bg-center bg-[var(--pastel-green)]">
@@ -118,10 +275,15 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
           <Card fullHeight centered>
             <div className="flex flex-col items-center justify-center gap-y-3 mb-6">
               <CardHeader>Material Detection</CardHeader>
-              {detecting && <FadeLoader color="#22c55e" />}
+              {detecting && !finished && <FadeLoader color="#22c55e" />}
             </div>
             <CardBody>
-              {detecting ? (
+              {finished ? (
+                <div className="text-center space-y-6">
+                  <h2 className="text-3xl font-bold text-green-500">Loading QR...</h2>
+                  <p className="text-slate-600">Please wait while we generate your code.</p>
+                </div>
+              ) : detecting ? (
                 <p className="text-slate-600 text-center text-lg">
                   Detecting the material of your item...
                 </p>
@@ -138,7 +300,7 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
                 <p className="text-slate-600 text-center text-lg">{error}</p>
               )}
             </CardBody>
-            {!detecting && !error && (
+            {!detecting && !error && !finished && (
               <div className="flex flex-col items-center justify-center mt-4">
                 <BeatLoader color="#22c55e" />
                 {thrown && weightInGrams && (
@@ -152,7 +314,7 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
                 redirectTo={`/idle-video/${params.id}`}
               />
             )}
-            {!error && !thrown && weightInGrams === undefined && (
+            {!error && !thrown && weightInGrams === undefined && !finished && (
               <TimerRedirect
                 delayInMs={60000}
                 resetTimeInMs={30000}

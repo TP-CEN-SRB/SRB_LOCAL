@@ -21,6 +21,7 @@ const login = async (values: z.infer<typeof LoginSchema>) => {
     return { error: message };
   }
   const { token } = await res.json();
+  console.log("🔑 JWT received from backend:", token);
   const cookieStore = cookies();
   const payload = jwt.decode(token);
   // retrieve the expiration time from the payload of the jwt
@@ -34,7 +35,9 @@ const login = async (values: z.infer<typeof LoginSchema>) => {
   cookieStore.set("token", token, {
     httpOnly: true,
     maxAge: maxAge,
+    path: "/",
   });
+  return { token };
 };
 
 export { login };

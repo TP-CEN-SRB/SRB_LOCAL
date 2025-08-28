@@ -16,12 +16,14 @@ const QrCodePage = ({ params, searchParams }: PageProps) => {
   const queueId =
     typeof searchParams.queueId === "string" ? searchParams.queueId : undefined;
 
-  // Debug logs
-  console.log("[QrCodePage] userId:", params.id);
-  console.log("[QrCodePage] queueId from URL:", queueId);
+  // --- Debug logs ---
+  console.group("[QrCodePage] Debug");
+  console.log("🧑 userId:", params.id);
+  console.log("🗂️ queueId from URL:", queueId);
+  console.groupEnd();
 
   if (!queueId) {
-    console.warn("[QrCodePage] No queueId provided → redirecting to idle page");
+    console.warn("[QrCodePage] ❌ No queueId provided → redirecting to idle page");
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-red-700">
@@ -43,7 +45,11 @@ const QrCodePage = ({ params, searchParams }: PageProps) => {
     queueId,
   };
 
-  console.log("[QrCodePage] QR Payload generated:", qrPayload);
+  // --- Log payload clearly ---
+  console.group("[QrCodePage] QR Payload");
+  console.log("Object:", qrPayload);
+  console.log(`String → userId=${qrPayload.userId}, queueId=${qrPayload.queueId}`);
+  console.groupEnd();
 
   return (
     <div className="flex flex-col items-center">
@@ -52,7 +58,7 @@ const QrCodePage = ({ params, searchParams }: PageProps) => {
         <CardBody>
           {/* QR generated */}
           <QrCodeComponent payload={qrPayload} />
-          {/* Scan listener (add queueId if needed) */}
+          {/* Scan listener */}
           <QrScanListener userId={params.id} queueId={queueId} />
         </CardBody>
 

@@ -1,11 +1,8 @@
 "use server";
-import { HOSTED_URL } from "@/keys";
+import { API_KEY,HOSTED_URL } from "@/keys";
 import { DisposalSchema } from "@/schemas";
 import { cookies } from "next/headers";
 import * as z from "zod";
-
-type SingleInput = z.infer<typeof DisposalSchema>;
-type BatchInput = Array<z.infer<typeof DisposalSchema>>;
 
 type Disposal = {
   id: string;
@@ -31,39 +28,32 @@ type Disposal = {
     };
   };
 };
-
-type CreateDisposalResult =
-  | {
-      mode: "single";
-      queueId: string;
-      disposalId: string;
-      point: number;
-    }
-  | {
-      mode: "multi";
-      queueId: string;
-      disposalIds: string[];
-      totalPoints: number;
-      pointsPerItem?: number[];
-    }
-  | { error: string };
-
 type DisposalCounts = {
   material: string;
   count: number;
 };
 
 export const createDisposal = async (
-  values: SingleInput | BatchInput,
-  userId: string
-): Promise<CreateDisposalResult> => {
+  values: z.infer<typeof DisposalSchema>,
+  userId: string,
+  queueId: string
+) => {
   const token = cookies().get("token");
+  console.log("🍪 [createDisposal] Token from cookies:", token?.value);
 
-  // Normalize to array and validate each with your existing schema
-  const items = (Array.isArray(values) ? values : [values]).map((v) => {
-    const ok = DisposalSchema.safeParse(v);
-    if (!ok.success) throw new Error("Invalid fields!");
-    return ok.data;
+  // validate input
+  const validatedFields = DisposalSchema.safeParse(values);
+  if (!validatedFields.success) {
+    return { error: "Invalid fields!" };
+  }
+  const { material, weightInGrams } = validatedFields.data;
+
+  // Step 1: create disposal
+  console.log("➡️ [createDisposal] Sending disposal request:", {
+    userId,
+    material,
+    weightInGrams,
+    authHeader: `Bearer ${token?.value}`,
   });
 
   const res = await fetch(`${HOSTED_URL}/api/disposal`, {
@@ -72,56 +62,55 @@ export const createDisposal = async (
       "Content-Type": "application/json",
       Authorization: `Bearer ${token?.value}`,
     },
-    body: JSON.stringify({
-      userId,
-      items: items.map(({ material, weightInGrams }) => ({
-        material,
-        weightInGrams,
-      })),
-    }),
+    body: JSON.stringify({ userId, material, weightInGrams }),
   });
 
-  if (!res.ok) {
-    const { message }: { message?: string } = await res.json().catch(() => ({}));
-    return { error: message ?? "Failed to create disposal(s)." };
+  console.log("📩 [createDisposal] Response status from /api/disposal:", res.status);
+
+  if (res.status !== 200 && res.status !== 201) {
+    const { message }: { message: string } = await res.json();
+    console.error("❌ [createDisposal] Error response:", message);
+    return { error: message };
   }
 
-  // Expected unified response from API:
-  // {
-  //   queueId: string,
-  //   disposalIds: string[],
-  //   totalPoints: number,
-  //   pointsPerItem?: number[]
-  // }
-  const data = await res.json();
+  const disposalRes = await res.json();
+  const { id, point } = disposalRes;
+  console.log("✅ [createDisposal] Disposal created:", { id, point });
 
-  if (!data?.queueId || !Array.isArray(data.disposalIds)) {
-    return { error: "Malformed API response." };
+  // Step 2: attach disposal to queue
+  console.log("➡️ [createDisposal] Attaching disposal to queue:", {
+    queueId,
+    disposalId: id,
+    authHeader: `Bearer ${token?.value}`,
+  });
+
+  const attach = await fetch(`${HOSTED_URL}/api/disposal/queue`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token?.value}`,
+    },
+    body: JSON.stringify({ queueId, disposalId: id }),
+  });
+
+  const attachBody = await attach.json();
+  console.log("📩 [createDisposal] Response from /queue attach:", {
+    status: attach.status,
+    body: attachBody,
+  });
+
+  if (attach.status !== 200) {
+    console.error("❌ [createDisposal] Failed to attach:", attachBody.message);
+    return { error: `Failed to attach disposal to queue: ${attachBody.message}` };
   }
 
-  if (data.disposalIds.length === 1) {
-    return {
-      mode: "single",
-      queueId: data.queueId,
-      disposalId: data.disposalIds[0],
-      point:
-        Array.isArray(data.pointsPerItem) && data.pointsPerItem.length > 0
-          ? data.pointsPerItem[0]
-          : data.totalPoints ?? 0,
-    };
-  }
-
-  return {
-    mode: "multi",
-    queueId: data.queueId,
-    disposalIds: data.disposalIds,
-    totalPoints: data.totalPoints ?? 0,
-    pointsPerItem: data.pointsPerItem,
-  };
+  return { disposalId: id, point };
 };
 
 export const getDisposal = async (id: string) => {
   const token = cookies().get("token");
+  console.log("🍪 [getDisposal] Token from cookies:", token?.value);
+
   const res = await fetch(`${HOSTED_URL}/api/disposal/${id}`, {
     method: "GET",
     headers: {
@@ -129,22 +118,23 @@ export const getDisposal = async (id: string) => {
       Authorization: `Bearer ${token?.value}`,
     },
   });
+
+  console.log("📩 [getDisposal] Response status:", res.status);
+
   if (res.status !== 200) {
     const { message }: { message: string } = await res.json();
+    console.error("❌ [getDisposal] Error:", message);
     return { error: message };
   }
+
   const { disposal }: { disposal: Disposal } = await res.json();
-  if (!disposal) {
-    return { error: "Disposal not found" };
-  }
-  if (disposal.isRedeemed === true) {
-    return { error: "This disposal has already been redeemed!" };
-  }
   return disposal;
 };
 
 export const getDisposals = async () => {
   const token = cookies().get("token");
+  console.log("🍪 [getDisposals] Token from cookies:", token?.value);
+
   const res = await fetch(`${HOSTED_URL}/api/disposal/`, {
     method: "GET",
     headers: {
@@ -152,10 +142,32 @@ export const getDisposals = async () => {
       Authorization: `Bearer ${token?.value}`,
     },
   });
+
+  console.log("📩 [getDisposals] Response status:", res.status);
+
   if (res.status !== 200) {
     const { message }: { message: string } = await res.json();
+    console.error("❌ [getDisposals] Error:", message);
     return { error: message };
   }
+
   const { disposals }: { disposals: DisposalCounts[] } = await res.json();
   return disposals;
+};
+
+export const closeQueue = async (queueId: string) => {
+  const res = await fetch(`${HOSTED_URL}/api/disposal/queue/${queueId}/close`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": API_KEY,
+    },
+  });
+
+  if (res.status !== 200) {
+    const { message } = await res.json();
+    return { error: message };
+  }
+
+  return { success: true };
 };

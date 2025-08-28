@@ -1,7 +1,10 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { notFound } from "next/navigation";
-import { generateQrToken } from "@/lib/jwt-tokens";
 import Image from "next/image";
+import { notFound } from "next/navigation";
+import { generateQrServerToken } from "@/app/action/qr"; // ✅ fixed import
 
 interface QrCodeComponentProps {
   payload: {
@@ -10,25 +13,36 @@ interface QrCodeComponentProps {
   };
 }
 
-const QrCodeComponent = async ({ payload }: QrCodeComponentProps) => {
+const QrCodeComponent = ({ payload }: QrCodeComponentProps) => {
   const { userId, queueId } = payload;
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>();
 
-  if (!queueId || !userId) {
-    notFound(); // 🛑 If either is missing, something is wrong
-  }
+  if (!queueId || !userId) notFound();
 
-  const token = generateQrToken({
-    queueId,
-  });
+  useEffect(() => {
+    const generateQr = async () => {
+      try {
+        const token = await generateQrServerToken(queueId); // ✅ now server-only
+        console.log("[QrCodeComponent] QR token:", token);
 
-  const qrCodeUrl = await QRCode.toDataURL(token, {
-    color: { light: "#f3fae1" }, // pastel-green background
-  });
+        const url = await QRCode.toDataURL(token, {
+          color: { light: "#f3fae1" },
+        });
+        setQrCodeUrl(url);
+      } catch (err) {
+        console.error("❌ Failed to generate QR code:", err);
+      }
+    };
+
+    generateQr();
+  }, [queueId, userId]);
+
+  if (!qrCodeUrl) return <p className="text-slate-600">Generating QR code...</p>;
 
   return (
     <Image
-      width="100"
-      height="100"
+      width={100}
+      height={100}
       className="w-full bg-transparent"
       src={qrCodeUrl}
       alt="Disposal QR Code"
