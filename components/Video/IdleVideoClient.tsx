@@ -2,6 +2,8 @@
 
 import IdleVideo from "./IdleVideo";
 import React, { useState, useEffect, useCallback } from "react";
+import { pusherClient } from "@/lib/pusher";
+import { useRouter } from "next/navigation";
 
 export type BinCapacity = {
   material: string;
@@ -17,8 +19,9 @@ export default function IdleVideoClient({
 }) {
   const [capacities, setCapacities] = useState(initialCapacities);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  // ✅ Fix: useCallback to memoize the function
+  // ✅ Fix: useCallback to memorize the function
   const fetchCapacities = useCallback(async () => {
     try {
       setLoading(true);
@@ -53,10 +56,26 @@ export default function IdleVideoClient({
     return "#22c55e";                        // green
   };
 
+  useEffect(() => {
+    const channel = `start-detect-${id}`;
+    pusherClient.subscribe(channel);
+
+    pusherClient.bind("start-update", (data: { start: boolean }) => {
+      if (data.start === true) {
+        router.push(`/detect-material/${id}`);
+      }
+    });
+
+    return () => {
+      pusherClient.unbind("start-update");
+      pusherClient.unsubscribe(channel);
+    };
+  }, [id, router]);
+
   return (
     <div className="relative w-full h-screen bg-gray-100">
       <IdleVideo />
-      <div className="absolute top-4 right-[160px] z-10 text-white px-4 py-3 space-y-2 text-sm w-[420px] rounded-md bg-gray-800/80">
+      <div className="absolute top-4 right-0 z-10 text-white px-4 py-3 space-y-2 text-sm w-[420px] rounded-md bg-gray-800/80">
         <div className="flex justify-between gap-3">
           {capacities.length === 0 ? (
             <div>{loading ? "Loading..." : "No data available"}</div>

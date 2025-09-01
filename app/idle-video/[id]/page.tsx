@@ -7,6 +7,7 @@ type BinCapacity = {
   percentage: number;
 };
 
+// --- Server-side fetch for bin capacities ---
 const getBinCapacities = async (token: string, id: string): Promise<BinCapacity[]> => {
   const res = await fetch(`${HOSTED_URL}/api/bin-capacity/${id}`, {
     method: "GET",
@@ -25,6 +26,7 @@ const getBinCapacities = async (token: string, id: string): Promise<BinCapacity[
   return await res.json();
 };
 
+// --- Server Component ---
 const IdleVideoPage = async ({ params }: { params: { id: string } }) => {
   const token = cookies().get("token")?.value;
   if (!token) {
@@ -39,6 +41,7 @@ const IdleVideoPage = async ({ params }: { params: { id: string } }) => {
     console.error("Failed to fetch bin capacities:", error);
   }
 
+  // Hand off to client component that handles Pusher + redirect + video
   return <IdleVideoClient initialCapacities={capacities} id={params.id} />;
 };
 
