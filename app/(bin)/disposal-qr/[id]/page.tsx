@@ -18,12 +18,12 @@ const QrCodePage = ({ params, searchParams }: PageProps) => {
 
   // --- Debug logs ---
   console.group("[QrCodePage] Debug");
-  console.log("🧑 userId:", params.id);
-  console.log("🗂️ queueId from URL:", queueId);
+  console.log("userId:", params.id);
+  console.log("queueId from URL:", queueId);
   console.groupEnd();
 
   if (!queueId) {
-    console.warn("[QrCodePage] ❌ No queueId provided → redirecting to idle page");
+    console.warn("[QrCodePage] No queueId provided → redirecting to idle page");
     return (
       <div className="flex min-h-screen flex-col items-center justify-center">
         <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-red-700">
@@ -39,7 +39,6 @@ const QrCodePage = ({ params, searchParams }: PageProps) => {
     );
   }
 
-  // Always queueId payload
   const qrPayload = {
     userId: params.id,
     queueId,

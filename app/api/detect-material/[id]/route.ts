@@ -16,7 +16,7 @@ export const POST = async (
       );
     }
 
-    // 🔹 Always expect an array
+    // Always expect an array
     const disposals: {
       material: string;
       weightInGrams: number;
@@ -30,7 +30,7 @@ export const POST = async (
       );
     }
 
-    // 🔹 Step 1: Create or reuse a disposal queue
+    // Step 1: Create or reuse a disposal queue
     const queueRes = await fetch(`${HOSTED_URL}/api/disposal/queue`, {
       method: "POST",
       headers: {
@@ -40,11 +40,11 @@ export const POST = async (
       body: JSON.stringify({ userId: params.id }),
     });
 
-    console.log("📩 [detect-material] /api/disposal/queue status:", queueRes.status);
+    console.log("[detect-material] /api/disposal/queue status:", queueRes.status);
 
     if (queueRes.status !== 200 && queueRes.status !== 201) {
       const { message } = await queueRes.json();
-      console.error("❌ [detect-material] Queue creation/reuse failed:", message);
+      console.error("[detect-material] Queue creation/reuse failed:", message);
       return NextResponse.json(
         { message: message ?? "Queue creation failed" },
         { status: 500 }
@@ -53,7 +53,7 @@ export const POST = async (
 
     const { queue } = await queueRes.json();
     if (!queue) {
-      console.error("❌ [detect-material] No queue returned");
+      console.error("[detect-material] No queue returned");
       return NextResponse.json(
         { message: "Queue could not be created or reused" },
         { status: 500 }
@@ -61,12 +61,12 @@ export const POST = async (
     }
 
     if (queueRes.status === 200) {
-      console.log("♻️ [detect-material] Reused existing OPEN queue:", queue.id);
+      console.log("[detect-material] Reused existing OPEN queue:", queue.id);
     } else if (queueRes.status === 201) {
       console.log("🆕 [detect-material] Created new queue:", queue.id);
     }
 
-    // 🔹 Step 2: Broadcast to frontend with queueId included
+    // Step 2: Broadcast to frontend with queueId included
     await pusherServer.trigger(
       `detect-material-${params.id}`,
       "material-details",
@@ -76,26 +76,26 @@ export const POST = async (
       }
     );
 
-    // 🔹 Step 3: Bin validations
+    // Step 3: Bin validations
     for (const { material, weightInGrams, thrown } of disposals) {
       const bin = await getBinByUserIdAndMaterial(params.id, material);
 
       if (!bin || "error" in bin) {
-        console.error("❌ [detect-material] Bin not found for:", material);
+        console.error("[detect-material] Bin not found for:", material);
         return NextResponse.json(
           { message: bin?.error ?? "Bin not found" },
           { status: 400 }
         );
       }
       if (bin.currentCapacity === 100) {
-        console.warn(`⚠️ [detect-material] Bin full: ${bin.binMaterial.name}`);
+        console.warn(`[detect-material] Bin full: ${bin.binMaterial.name}`);
         return NextResponse.json(
           { message: `${bin.binMaterial.name} bin is already full!` },
           { status: 400 }
         );
       }
       if (bin.status === "UNDER_MAINTENANCE") {
-        console.warn(`⚠️ [detect-material] Bin under maintenance: ${bin.binMaterial.name}`);
+        console.warn(`[detect-material] Bin under maintenance: ${bin.binMaterial.name}`);
         return NextResponse.json(
           { message: `${bin.binMaterial.name} bin is under maintenance!` },
           { status: 400 }
@@ -103,7 +103,7 @@ export const POST = async (
       }
 
       if (weightInGrams && thrown === true) {
-        continue; // let frontend handle disposal creation
+        continue; 
       }
     }
 
@@ -112,7 +112,7 @@ export const POST = async (
       { status: 200 }
     );
   } catch (error) {
-    console.error("💥 [detect-material] Error:", error);
+    console.error("[detect-material] Error:", error);
     if (error instanceof Error) {
       return NextResponse.json({ message: error.message }, { status: 500 });
     }

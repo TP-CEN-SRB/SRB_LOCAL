@@ -23,7 +23,7 @@ const UsersLeaderboard = ({
   leaderBoardData: LeaderboardUser[] | undefined;
   id: string;
 }) => {
-  // ✅ Move hooks to top-level
+  
   const [animatedIndex, setAnimatedIndex] = useState<number | null>(null);
   const prevTopRef = useRef<LeaderboardUser[]>([]);
 
@@ -46,7 +46,7 @@ const UsersLeaderboard = ({
     }
   }, [leaderBoardData]);
 
-  // ✅ Early return *after* hooks
+  
   if (!leaderBoardData || leaderBoardData.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center text-lg text-gray-600">
@@ -67,7 +67,7 @@ const UsersLeaderboard = ({
 
         {/* Top 3 Section */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
-          {/* 🥈 */}
+          {/* 2nd Place */}
           <div className={cn("flex flex-col items-center bg-[#CCE0B4] rounded-2xl px-6 py-4 shadow-md text-center w-full sm:w-1/3 order-1 sm:order-1")}>
             <div className="text-4xl animate-bounce text-gray-500 mb-2">🥈</div>
             <div className="text-lg font-semibold truncate">
@@ -79,7 +79,7 @@ const UsersLeaderboard = ({
             <div className="text-sm">Favourite: {topThree[1]?.mostFrequentMaterial ?? "N/A"}</div>
           </div>
 
-          {/* 🥇 */}
+          {/* 1st Place */}
           <div className={cn(
             "flex flex-col items-center bg-[#CCE0B4] rounded-2xl px-6 py-4 shadow-md text-center w-full sm:w-1/3 order-0 sm:order-2",
             animatedIndex === 0 && "animate-pulse ring-4 ring-green-500"
@@ -94,7 +94,7 @@ const UsersLeaderboard = ({
             <div className="text-sm">Favourite: {topThree[0]?.mostFrequentMaterial ?? "N/A"}</div>
           </div>
 
-          {/* 🥉 */}
+          {/* 3rd Place */}
           <div className={cn("flex flex-col items-center bg-[#CCE0B4] rounded-2xl px-6 py-4 shadow-md text-center w-full sm:w-1/3 order-2 sm:order-3")}>
             <div className="text-4xl animate-bounce text-orange-500 mb-2">🥉</div>
             <div className="text-lg font-semibold truncate">

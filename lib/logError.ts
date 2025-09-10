@@ -15,11 +15,11 @@ export const logError = async (tag: string, message: string) => {
     const result = await res.json();
 
     if (!res.ok) {
-      console.error("❌ Crash log failed:", result);
+      console.error("Crash log failed:", result);
     } else {
-      console.log("✅ Crash log sent:", result);
+      console.log("Crash log sent:", result);
     }
   } catch (err) {
-    console.error("🚨 Crash log error:", err);
+    console.error("Crash log error:", err);
   }
 };

@@ -24,20 +24,20 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
     { material: string; weightInGrams?: number; thrown: boolean }[]
   >([]);
   const [completed, setCompleted] = useState(0);
-  const [finished, setFinished] = useState(false); // ✅ freeze flag
+  const [finished, setFinished] = useState(false); // freeze flag
 
   const router = useRouter();
   const processed = useRef<Set<string>>(new Set());
 
   // --- Bin checks
   useEffect(() => {
-    if (finished) return; // 🚫 no more bin checks
+    if (finished) return; // no more bin checks
 
     const checkIfBinIsInOrder = async () => {
       if (material) {
-        console.log("🔎 Checking bin for material:", material);
+        console.log("Checking bin for material:", material);
         const bin = await getBinByUserIdAndMaterial(params.id, material);
-        console.log("📦 Bin lookup result:", bin);
+        console.log("Bin lookup result:", bin);
 
         if (!bin || "error" in bin) {
           setDetecting(false);
@@ -75,18 +75,18 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
   useEffect(() => {
     if (finished) return;
 
-    // 🚀 If all done, mark session finished right away
+    // If all done, mark session finished right away
     if (completed > 0 && disposals.length > 0 && completed === disposals.length) {
-      console.log("✅ All disposals completed → marking finished early");
-      setFinished(true); // 🔑 freezes pipeline immediately
+      console.log("All disposals completed → marking finished early");
+      setFinished(true); // freezes pipeline immediately
       return;
     }
 
-    console.log("♻️ Disposals updated:", disposals);
+    console.log("Disposals updated:", disposals);
 
     const nextUnthrown = disposals.find((d) => !d.thrown);
     if (nextUnthrown) {
-      console.log("➡️ Next unthrown disposal:", nextUnthrown);
+      console.log("Next unthrown disposal:", nextUnthrown);
       setMaterial(nextUnthrown.material.toUpperCase());
       setWeightInGrams(nextUnthrown.weightInGrams ?? undefined);
       setThrown(false);
@@ -105,16 +105,16 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
         completed === disposals.length &&
         queueId
       ) {
-        console.log("🔒 Closing queue before redirect:", queueId);
+        console.log("Closing queue before redirect:", queueId);
 
-        // 🚀 freeze pipeline immediately
+        // freeze pipeline immediately
         setFinished(true);
 
         const result = await closeQueue(queueId);
         if (result?.error) {
-          console.error("⚠️ Failed to close queue:", result.error);
+          console.error("Failed to close queue:", result.error);
         } else {
-          console.log("✅ Queue closed successfully:", queueId);
+          console.log("Queue closed successfully:", queueId);
         }
 
         router.push(`/disposal-qr/${params.id}?queueId=${queueId}`);
@@ -126,20 +126,20 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
 
   // --- Mark as thrown when weight is set
   useEffect(() => {
-    if (finished) return; // 🚫 no more marking
+    if (finished) return; // no more marking
     if (weightInGrams && !thrown) {
-      console.log("📏 Weight detected, marking as thrown:", weightInGrams);
+      console.log("Weight detected, marking as thrown:", weightInGrams);
       setThrown(true);
     }
   }, [weightInGrams, thrown, finished]);
 
   // --- Disposal creation
   useEffect(() => {
-    if (finished) return; // 🚫 freeze disposal creation
+    if (finished) return; // freeze disposal creation
     if (completed >= disposals.length && disposals.length > 0) return;
 
     const handleDisposal = async () => {
-      console.log("⚡ handleDisposal triggered:", {
+      console.log("handleDisposal triggered:", {
         thrown,
         material,
         weightInGrams,
@@ -147,18 +147,18 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
       });
 
       if (!thrown || !material || !weightInGrams || !queueId) {
-        console.log("⏸️ Skipping incomplete disposal");
+        console.log("Skipping incomplete disposal");
         return;
       }
 
       const key = `${queueId}-${material.toUpperCase()}-${weightInGrams}`;
       if (processed.current.has(key)) {
-        console.log("⏭️ Duplicate disposal skipped:", key);
+        console.log("Duplicate disposal skipped:", key);
         return;
       }
       processed.current.add(key);
 
-      console.log("🗑️ Processing disposal:", {
+      console.log("Processing disposal:", {
         material,
         weightInGrams,
         queueId,
@@ -170,15 +170,15 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
       );
 
       if (error) {
-        console.error("❌ Disposal error:", error);
+        console.error("Disposal error:", error);
         setError(error);
         await logError(
           "DISPOSAL_FAIL",
           `Material: ${material}, Weight: ${weightInGrams}, UserId: ${params.id}, Error: ${error}`
         );
       } else {
-        console.log("✅ Disposal succeeded, points awarded:", point);
-        setCompleted((prev) => prev + 1); // simplified ✅
+        console.log("Disposal succeeded, points awarded:", point);
+        setCompleted((prev) => prev + 1);
         setDisposals((prev) => {
           const updated = [...prev];
           const idx = updated.findIndex(
@@ -210,7 +210,7 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
 
   // --- Pusher subscription
   useEffect(() => {
-    if (finished) return; // 🚫 no subscription after finished
+    if (finished) return; // no subscription after finished
     console.log("📡 Subscribing to channel:", `detect-material-${params.id}`);
     pusherClient.subscribe(`detect-material-${params.id}`);
 
@@ -224,10 +224,10 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
           thrown: boolean;
         }[];
       }) => {
-        console.log("📩 Received from Pusher:", data);
+        console.log("Received from Pusher:", data);
 
         if (data.queueId !== queueId) {
-          console.log("🔄 New queue detected:", data.queueId);
+          console.log("New queue detected:", data.queueId);
           processed.current.clear();
           setCompleted(0);
           setDisposals([]);
@@ -259,7 +259,7 @@ const DetectMaterialPage = ({ params }: { params: { id: string } }) => {
     );
 
     return () => {
-      console.log("❌ Unsubscribing from channel:", `detect-material-${params.id}`);
+      console.log("Unsubscribing from channel:", `detect-material-${params.id}`);
       pusherClient.unbind("material-details");
       pusherClient.unsubscribe(`detect-material-${params.id}`);
     };

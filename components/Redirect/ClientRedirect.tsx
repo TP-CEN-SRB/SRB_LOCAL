@@ -14,7 +14,7 @@ const ClientRedirect = ({ to, delay }: { to: string; delay: number }) => {
     return () => clearTimeout(timeout);
   }, [router, to, delay]);
 
-  return null; // ✅ Invisible, renders nothing
+  return null; 
 };
 
 export default ClientRedirect;

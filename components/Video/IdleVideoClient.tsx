@@ -21,7 +21,6 @@ export default function IdleVideoClient({
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // ✅ Fix: useCallback to memorize the function
   const fetchCapacities = useCallback(async () => {
     try {
       setLoading(true);
@@ -44,7 +43,6 @@ export default function IdleVideoClient({
     }
   }, [id]);
 
-  // ✅ Fix: include fetchCapacities in deps
   useEffect(() => {
     fetchCapacities();
   }, [fetchCapacities]);
@@ -75,8 +73,8 @@ export default function IdleVideoClient({
   return (
     <div className="relative w-full h-screen bg-gray-100">
       <IdleVideo />
-      <div className="absolute top-4 right-0 z-10 text-white px-4 py-3 space-y-2 text-sm w-[420px] rounded-md bg-gray-800/80">
-        <div className="flex justify-between gap-3">
+      <div className="absolute top-4 right-0 z-10 text-white px-4 py-3 text-sm rounded-md bg-gray-800/80">
+          <div className="inline-flex gap-6">
           {capacities.length === 0 ? (
             <div>{loading ? "Loading..." : "No data available"}</div>
           ) : (

@@ -6,12 +6,12 @@ import { useEffect } from "react";
 
 type Props = {
   userId: string;
-  queueId?: string; // ✅ allow passing queueId
+  queueId?: string; 
 };
 
 type DisposalUpdateEvent = {
   updated: boolean;
-  queueId?: string; // backend may include this; used to filter
+  queueId?: string; 
 };
 
 const QrScanListener = ({ userId, queueId }: Props) => {
@@ -31,7 +31,7 @@ const QrScanListener = ({ userId, queueId }: Props) => {
     // Always subscribe to user-level channel (backward compat)
     pusherClient.subscribe(userChannel);
 
-    // Optionally subscribe to queue-specific channel (preferred if backend emits it)
+    
     if (queueChannel) pusherClient.subscribe(queueChannel);
 
     const handler = (data: DisposalUpdateEvent) => {

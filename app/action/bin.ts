@@ -27,7 +27,6 @@ export const getBinByUserIdAndMaterial = async (
     return { error: message };
   }
   const { bins }: { bins: Bin[] } = await res.json();
-  // return the first bin
   return bins[0];
 };
 

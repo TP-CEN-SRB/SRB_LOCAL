@@ -39,7 +39,7 @@ export const createDisposal = async (
   queueId: string
 ) => {
   const token = cookies().get("token");
-  console.log("🍪 [createDisposal] Token from cookies:", token?.value);
+  console.log("[createDisposal] Token from cookies:", token?.value);
 
   // validate input
   const validatedFields = DisposalSchema.safeParse(values);
@@ -49,7 +49,7 @@ export const createDisposal = async (
   const { material, weightInGrams } = validatedFields.data;
 
   // Step 1: create disposal
-  console.log("➡️ [createDisposal] Sending disposal request:", {
+  console.log("[createDisposal] Sending disposal request:", {
     userId,
     material,
     weightInGrams,
@@ -65,7 +65,7 @@ export const createDisposal = async (
     body: JSON.stringify({ userId, material, weightInGrams }),
   });
 
-  console.log("📩 [createDisposal] Response status from /api/disposal:", res.status);
+  console.log("[createDisposal] Response status from /api/disposal:", res.status);
 
   if (res.status !== 200 && res.status !== 201) {
     const { message }: { message: string } = await res.json();
@@ -75,10 +75,10 @@ export const createDisposal = async (
 
   const disposalRes = await res.json();
   const { id, point } = disposalRes;
-  console.log("✅ [createDisposal] Disposal created:", { id, point });
+  console.log("[createDisposal] Disposal created:", { id, point });
 
   // Step 2: attach disposal to queue
-  console.log("➡️ [createDisposal] Attaching disposal to queue:", {
+  console.log("[createDisposal] Attaching disposal to queue:", {
     queueId,
     disposalId: id,
     authHeader: `Bearer ${token?.value}`,
@@ -94,13 +94,13 @@ export const createDisposal = async (
   });
 
   const attachBody = await attach.json();
-  console.log("📩 [createDisposal] Response from /queue attach:", {
+  console.log("[createDisposal] Response from /queue attach:", {
     status: attach.status,
     body: attachBody,
   });
 
   if (attach.status !== 200) {
-    console.error("❌ [createDisposal] Failed to attach:", attachBody.message);
+    console.error("[createDisposal] Failed to attach:", attachBody.message);
     return { error: `Failed to attach disposal to queue: ${attachBody.message}` };
   }
 
@@ -109,7 +109,7 @@ export const createDisposal = async (
 
 export const getDisposal = async (id: string) => {
   const token = cookies().get("token");
-  console.log("🍪 [getDisposal] Token from cookies:", token?.value);
+  console.log("[getDisposal] Token from cookies:", token?.value);
 
   const res = await fetch(`${HOSTED_URL}/api/disposal/${id}`, {
     method: "GET",
@@ -119,11 +119,11 @@ export const getDisposal = async (id: string) => {
     },
   });
 
-  console.log("📩 [getDisposal] Response status:", res.status);
+  console.log("[getDisposal] Response status:", res.status);
 
   if (res.status !== 200) {
     const { message }: { message: string } = await res.json();
-    console.error("❌ [getDisposal] Error:", message);
+    console.error("[getDisposal] Error:", message);
     return { error: message };
   }
 
@@ -133,7 +133,7 @@ export const getDisposal = async (id: string) => {
 
 export const getDisposals = async () => {
   const token = cookies().get("token");
-  console.log("🍪 [getDisposals] Token from cookies:", token?.value);
+  console.log("[getDisposals] Token from cookies:", token?.value);
 
   const res = await fetch(`${HOSTED_URL}/api/disposal/`, {
     method: "GET",
@@ -143,11 +143,11 @@ export const getDisposals = async () => {
     },
   });
 
-  console.log("📩 [getDisposals] Response status:", res.status);
+  console.log("[getDisposals] Response status:", res.status);
 
   if (res.status !== 200) {
     const { message }: { message: string } = await res.json();
-    console.error("❌ [getDisposals] Error:", message);
+    console.error("[getDisposals] Error:", message);
     return { error: message };
   }
 

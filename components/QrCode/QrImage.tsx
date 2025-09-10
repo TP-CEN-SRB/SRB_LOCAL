@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { generateQrServerToken } from "@/app/action/qr"; // ✅ fixed import
+import { generateQrServerToken } from "@/app/action/qr";
 
 interface QrCodeComponentProps {
   payload: {
@@ -22,7 +22,7 @@ const QrCodeComponent = ({ payload }: QrCodeComponentProps) => {
   useEffect(() => {
     const generateQr = async () => {
       try {
-        const token = await generateQrServerToken(queueId); // ✅ now server-only
+        const token = await generateQrServerToken(queueId);
         console.log("[QrCodeComponent] QR token:", token);
 
         const url = await QRCode.toDataURL(token, {
@@ -30,7 +30,7 @@ const QrCodeComponent = ({ payload }: QrCodeComponentProps) => {
         });
         setQrCodeUrl(url);
       } catch (err) {
-        console.error("❌ Failed to generate QR code:", err);
+        console.error("Failed to generate QR code:", err);
       }
     };
 
